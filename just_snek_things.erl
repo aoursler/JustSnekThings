@@ -24,16 +24,13 @@ stop(ChatName) ->
     gen_server:stop({global, ChatName}).
 init(LoopData) ->
     {ok, LoopData}.
-handle_call({list, _UserName}, _From, LoopData) ->
-    {reply, LoopData, LoopData}.
 handle_cast({subscribe, UserName}, LoopData) ->
     {noreply, [UserName | LoopData]};
 handle_cast({unsubscribe, UserName}, LoopData) ->
     {noreply, filterOut(UserName, LoopData)};
-handle_cast({message, Message, UserName}, LoopData) ->
-    lists:map(fun (X) -> X ! {UserName, Message} end,
-              filterOut(UserName, LoopData)),
-    {noreply, LoopData}.
+% TODO: Handle cast/call for move
+%       Use erlport to run snek, 
+
 terminate(Reason, _LoopData) ->
     exit(self(), Reason).
 filterOut(_Element, []) -> [];
@@ -43,19 +40,22 @@ filterOut(Element, [Head | Tail]) -> [Head | filterOut(Element, Tail)].
 % CLIENT FUNCTIONS
 join_game(HostName, GameName, UserName) ->
     subscribe(HostName, GameName, UserName),
-    io:fwrite("\e[8;~w;~wt", [BoardHeight, BoardWidth]), # resizes the window to BoardHeight x BoardWidth
+    # resizes the window to BoardHeight x BoardWidth
+    io:fwrite("\e[8;~w;~wt", [BoardHeight, BoardWidth]),
     Pid = spawn_link(?MODULE, receiveMessages, []),
     register(UserName, Pid),
     move(HostName, GameName, UserName),
     unsubscribe(HostName, GameName, UserName).
 
 move(HostName, GameName, UserName) ->
-    Message = io:get_line("~w: ", [UserName]), #TODO: No prompt, hidden keypress
-    case Message of
+    #TODO: Get arow key press or --quit 
+    #      Without prompt & try to hide keypress as well?
+    Move = io:get_line("~w: ", [UserName]),
+    case Move of
         "--quit\n" -> {ok};
-        Message ->
-            gen_server:cast({GameName, HostName}, %TODO: Cast or call?
-                            {message, Message, {UserName, node()}}),
+        Move ->
+            gen_server:call({GameName, HostName},
+                            {move, Move, {UserName, node()}}),
             move(HostName, GameName, UserName)
     end.
 
@@ -64,6 +64,7 @@ move(HostName, GameName, UserName) ->
 receiveMessages() ->
     receive
         {{Sender, Node}, Board} -> io:fwrite("~w: ~s", [Sender, Message]) %TODO: Make board 2D array, print 2D array
+        %TODO: Send board to erlport to display??
     end,
     receiveMessages().
 subscribe(HostName, GameName, UserName) ->
