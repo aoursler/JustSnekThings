@@ -1,0 +1,34 @@
+start_game()
+join_game() //Snake1
+join_game() //Snake2
+join_game() //Snake3
+// The following moves may happen in any order between Sneks, so long as
+// they happen in this order for each individual Snek.
+move(s) //Snake1
+move(s) //Snake1
+move(s) //Snake1
+move(s) //Snake1
+move(a) //Snake1
+move(a) //Snake1
+move(a) //Snake1
+move(a) //Snake1
+move(a) //Snake1
+move(a) //Snake2
+move(a) //Snake2
+move(a) //Snake2
+move(a) //Snake2
+move(a) //Snake2
+move(a) //Snake2
+move(d) //Snake3
+move(d) //Snake3
+move(d) //Snake3
+move(d) //Snake3
+move(d) //Snake3
+move(d) //Snake3
+move(d) //Snake3
+move(d) //Snake3
+move(d) //Snake3
+move(d) //Snake3
+move(d) //Snake3
+move(d) //Snake3
+move(d) //Snake3
