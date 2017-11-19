@@ -19,6 +19,13 @@ class MySnek:
 		self.board = [[' ' for x in range(BOARDWIDTH)] \
 			for y in range(BOARDHEIGHT)]
 		
+		seed = self.find_empty_spot()
+		self.board[seed[0]][seed[1]] = '*'
+
+		seed = self.find_empty_spot()
+		self.board[seed[0]][seed[1]] = '@'
+
+
 		# Current players and locations stored in Dict for fast access
 		#   keyed on player (Node,PID), stores list:
 		#   	[current_location, Char_Head_Token, Score, last_location]
@@ -35,6 +42,15 @@ class MySnek:
 
 		#return ('started', (Node,PID))
 
+	def find_empty_spot(self):
+		seed = (random.randint(0, BOARDHEIGHT-1), \
+				random.randint(0, BOARDWIDTH-1))
+			# Reroll on seed conflict
+		while self.board[seed[0]][seed[1]] != ' ':
+			seed = (random.randint(0, BOARDHEIGHT-1), \
+				random.randint(0, BOARDWIDTH-1))
+
+		return seed
 
 	# Function to add player to game. Takes in player Node, PID and generates a 
 	#	random starting location
@@ -42,25 +58,21 @@ class MySnek:
 		
 		# Check to see if player is already playing from a given PID
 		if (Node,PID) not in self.players:
-		
-			# Player seed location
-			start_loc = (random.randint(0, BOARDHEIGHT-1), \
-				random.randint(0, BOARDWIDTH-1))
-			# Reroll on seed conflict
-			while start_loc in self.players.values():
-				start_loc = (random.randint(0, BOARDHEIGHT-1), \
-					random.randint(0, BOARDWIDTH-1))
+
+			# player seed loccation
+			seed = self.find_empty_spot()
 
 			snake_head = chr(ord('A'))
 			while snake_head in self.snakes:
 				snake_head = chr(ord(snake_head) + 1)
-			self.players[(Node,PID)] = [start_loc, \
-			snake_head, 0, start_loc, 50, []]
+			self.players[(Node,PID)] = [seed, \
+			snake_head, 0, seed, 50, []]
 			self.snakes.append(snake_head)
 
-			self.board[start_loc[0]][start_loc[1]] = snake_head
+			self.board[seed[0]][seed[1]] = snake_head
 
 		return ('added', (Node,PID))
+
 
 	# Basic Bookkeeping deletion from players Dict.
 	#	Callable on player quit or death. 
@@ -88,9 +100,18 @@ class MySnek:
 		collis = self.board[newP[0]][newP[1]]
 		
 		if collis == '*':
-			return #TODO: Implement powerups/score
+			collis = ' '
+			self.players[pTup][4] += 25
+			seed = self.find_empty_spot()
+			self.board[seed[0]][seed[1]] = '*'
+			
+		if collis == '@':
+			collis = ' '
+			self.players[pTup][4] += 20
+			seed = self.find_empty_spot()
+			self.board[seed[0]][seed[1]] = '*'	
 
-		elif collis != ' ':
+		if collis != ' ':
 			# crash - this kills the snek
 			self.board[oldP[0]][oldP[1]] = ' '
 			return self.remove_player(Node, PID)
