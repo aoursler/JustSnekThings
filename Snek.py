@@ -2,7 +2,7 @@ import random
 import Queue
 import threading
 
-BOARDWIDTH = 40
+BOARDWIDTH = 160
 BOARDHEIGHT = 40
 
 # MySnek class to instantiate a game of Snek and provide a series of function calls
