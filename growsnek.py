@@ -180,9 +180,9 @@ def _move_check(UserName, newP, oldP):
 		board[oldP[0]][oldP[1]] = temparray[2].lower()
 		# make new head space non-space
 		board[newP[0]][newP[1]] = temparray[2]
-			# remember last space
+		# remember last space
 		temparray[4] = oldP
-			#remember new space
+		#remember new space
 		temparray[1] = newP
 
 		# every move costs a point
@@ -192,10 +192,8 @@ def _move_check(UserName, newP, oldP):
 
 		# track the snake tail
 		temparray[6].append(oldP)
-		if len(temparray[6]) > 20:
-			tail_rem = temparray[6].pop(0)
-			board[tail_rem[0]][tail_rem[1]] = ' '
-
+		
+		
 		# replace the players element with the updated values
 		for i in players:
 			if i[0] == (UserName):
@@ -256,7 +254,7 @@ def get_board():
 	global snakes
 	global server
 
-	return {'board', tuple(board)}
+	return tuple(board)
 		# TODO: Add powerup logic
 		#  might include adding tail field to player data for death
 		#def add_power_up(self):

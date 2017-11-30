@@ -98,7 +98,7 @@ def add_player(UserName):
 
 # remove_player(UserName): Basic Bookkeeping deletion from players list
 #	Callable on player quit or death. 
-def remove_player(UserName):
+def snack_player(UserName):
 
 	global board
 	global players
@@ -108,15 +108,13 @@ def remove_player(UserName):
 	# finds the players element to remove
 	for i in players:
 		if i[0] == (UserName):
-			head = i[2]
-			players.remove(i)
-			snakes.remove(head)
-
-	if len(players) == 0:
-		return ('quit', server)
+			temparray = i
+			for j in temparray[6]:
+				board[j[0]][j[1]] = '*'
+			temparray[]
 
 	else:
-		return ('removed', (UserName))
+		return ('snacked', (UserName))
 	
 
 def get_players():
@@ -153,6 +151,8 @@ def _move_check(UserName, newP, oldP):
 		for i in players:
 			if i[0] == (UserName):
 				i[5] += 25
+				if i[5] == VICTORY:
+					return ('victory', (UserName))
 		seed = find_empty_spot()
 		board[seed[0]][seed[1]] = '*'
 			
@@ -162,6 +162,8 @@ def _move_check(UserName, newP, oldP):
 		for i in players:
 			if i[0] == (UserName):
 				i[5] += 20
+				if i[5] == VICTORY:
+					return ('victory', (UserName))
 		seed = find_empty_spot()
 		board[seed[0]][seed[1]] = '*'	
 
@@ -169,7 +171,7 @@ def _move_check(UserName, newP, oldP):
 	if collis != ' ':
 		# crash - this kills the snek
 		board[oldP[0]][oldP[1]] = ' '
-		return remove_player(UserName)
+		return snack_player(UserName)
 
 	else:
 		temparray = None
@@ -188,7 +190,7 @@ def _move_check(UserName, newP, oldP):
 		# every move costs a point
 		temparray[5] -= 1
 		if temparray[5] == 0:
-			return remove_player(UserName)
+			return snack_player(UserName)
 
 		# track the snake tail
 		temparray[6].append(oldP)
@@ -256,7 +258,7 @@ def get_board():
 	global snakes
 	global server
 
-	return {'board', tuple(board)}
+	return (tuple(board)
 		# TODO: Add powerup logic
 		#  might include adding tail field to player data for death
 		#def add_power_up(self):
