@@ -81,6 +81,7 @@ unsubscribe(HostName, GameName, UserName) ->
 % SERVER FUNCTIONS
 start_link(GameName) ->
     {ok, Pname} = python:start(),
+    python:call(Pname, snek, make_fields, [GameName]),
     {ok, Pid} = gen_server:start_link({global, GameName}, ?MODULE, [Pname],[]),
     io:fwrite("server_started~n"),
     register(GameName, Pid),
@@ -93,9 +94,11 @@ init(Pname) ->
     {ok, {Pname, []}}.
 handle_cast({subscribe, UserName}, {Pname, LoopData}) ->
     io:fwrite("subscribing~n"),
+    python:call(Pname, snek, add_player, [UserName]),
     {noreply, {Pname, [UserName | LoopData]}};
 handle_cast({unsubscribe, UserName}, {Pname, LoopData}) ->
     io:fwrite("unsubscribing~n"),
+    python:call(Pname, snek, remove_player, [UserName]),
     {noreply, {Pname, filterOut(UserName, LoopData)}};
 handle_cast({"move_left", UserName}, {Pname, LoopData}) ->
     io:fwrite("moving left ~n"),
