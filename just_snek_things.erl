@@ -3,6 +3,8 @@
 % Writen by: Anne Oursler, November 2017
 % Code Reviewed by:
 
+%TODO: Remove print statements from this code. They are for debugging purposes
+%      before we have a frontend
 
 -module(just_snek_things).
 -behavior(gen_server).
@@ -27,32 +29,47 @@ join_game(HostName, GameName, UserName) ->
     subscribe(HostName, GameName, UserName),
     % resizes the window to BoardHeight x BoardWidth
     io:fwrite("\e[8;~w;~wt", [boardHeight(), boardWidth()]),
-    %Pid = spawn_link(?MODULE, receiveMessages, []),
-    %io:fwrite("Pid: ~w~n", [Pid]),
-    global:register_name(UserName, spawn_link(?MODULE, receiveMessages, [])), %Pid),
+    global:register_name(UserName, spawn_link(?MODULE, receiveMessages, [])),
     io:fwrite("joined_game~n"),
     move(HostName, GameName, UserName),
     unsubscribe(HostName, GameName, UserName).
 
 move(HostName, GameName, UserName) ->
-    Move = io:get_chars("", 1),
+    Move = io:get_line(""),
     io:fwrite("got a char~n"),
+    %TODO: Integrate with Lexi's frontend which will get moves char by char
+    %      without pressing ENTER.
     case Move of
         "--quit\n" -> {ok};
+        "w\n" ->
+            gen_server:cast({GameName, HostName}, {move_up, UserName}), 
+            io:fwrite("moved up~n"),
+            move(HostName, GameName, UserName);
+        "a\n" ->
+            gen_server:cast({GameName, HostName}, {move_left, UserName}),                   
+            io:fwrite("moved left~n"),
+            move(HostName, GameName, UserName);
+        "s\n" ->
+            gen_server:cast({GameName, HostName}, {move_down, UserName}),                   
+            io:fwrite("moved down~n"),
+            move(HostName, GameName, UserName);
+        "d\n" ->
+            gen_server:cast({GameName, HostName}, {move_right, UserName}),                   
+            io:fwrite("moved right~n"),
+            move(HostName, GameName, UserName);
         Move ->
-            gen_server:call({GameName, HostName},
-                            {move, Move, {UserName, node()}}),
-            io:fwrite("moved"),
+            io:fwrite("ERROR, BAD INPUT, NOTHING SENT TO SERVER~n"),
             move(HostName, GameName, UserName)
     end.
 
-% This is esentually a mailbox that recieves the updated board and prints it to the screen repeatedly
-% Since the screen is the exact size desired, this should completely replace the previous game state, and create a new one.
+% This is esentually a mailbox that recieves the updated board and prints it
+% to the screen repeatedly. Since the screen is the exact size desired, this
+% should completely replace the previous game state, and create a new one.
 receiveMessages() ->
     io:fwrite("receiving_messages~n"),
     receive
         {{Sender, _Node}, Board} -> io:fwrite("~w: ~s", [Sender, Board])
-        %TODO LEXI: Send board to erlport to display, or other display method.
+        %TODO: (lexi) Send board to erlport to display, or other display method.
     end,
     receiveMessages().
 subscribe(HostName, GameName, UserName) ->
