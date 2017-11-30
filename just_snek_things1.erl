@@ -114,6 +114,12 @@ handle_call({move, UserName, Direction}, _From, LoopData) ->
 terminate(Reason, _LoopData) ->
     io:fwrite("server_stopping~n"),
     exit(self(), Reason).
+
+% rewrote using tail recursion
 filterOut(_Element, []) -> [];
-filterOut(Element, [Element | Tail]) -> filterOut(Element, Tail);
-filterOut(Element, [Head | Tail]) -> [Head | filterOut(Element, Tail)].
+filterOut(Element, List) -> filterOut(Element, List, []);
+filterOut(Element, [Element|Tail], Keep) -> filterOut(Element, Tail, Keep);
+filterOut(Element, [Head|Tail], Keep) -> filterOut(Element, Tail, [Keep|Head]).
+
+%filterOut(Element, [Element | Tail]) -> filterOut(Element, Tail);
+%filterOut(Element, [Head | Tail]) -> [Head | filterOut(Element, Tail)].

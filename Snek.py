@@ -7,7 +7,7 @@ BOARDHEIGHT = 40
 
 # MySnek class to instantiate a game of Snek and provide a series of function calls
 #	to interact with it 
-class MySnek:
+class mysnek:
 	
 	# Init takes in the Node and PID of the calling server
 	def __init__(self, Node, PID) :
@@ -180,3 +180,7 @@ class MySnek:
 		# TODO: Add powerup logic
 		#  might include adding tail field to player data for death
 		#def add_power_up(self):
+
+def makesname(Node, PID):
+	global gamesnake = mysnek(Node,PID)
+	return
