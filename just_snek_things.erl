@@ -17,7 +17,7 @@
 % SERVER FUNCTION DEFINITIONS
 -export([start_link/1, stop/1]).
 -export([init/1, terminate/2, handle_call/3, handle_cast/2]).
--export([filterOut/2]).
+-export([filterOut/2, timer/1]).
 
 
 % CLIENT GLOBAL CONSTANTS
@@ -68,7 +68,7 @@ move(HostName, GameName, UserName) ->
 receiveMessages() ->
     io:fwrite("receiving_messages~n"),
     receive
-        {{Sender, _Node}, Board} -> io:fwrite("~w: ~s", [Sender, Board])
+        {Sender, board, Board} -> io:fwrite("~w: ~s", [Sender, Board])
         %TODO: (lexi) Send board to erlport to display, or other display method.
     end,
     receiveMessages().
@@ -81,8 +81,9 @@ unsubscribe(HostName, GameName, UserName) ->
 % SERVER FUNCTIONS
 start_link(GameName) ->
     {ok, Pname} = python:start(),
-    python:call(Pname, snek, make_fields, [GameName]),
+    {<<"started">>, GameName} = python:call(Pname, snek, make_fields, [GameName]),
     {ok, Pid} = gen_server:start_link({global, GameName}, ?MODULE, [Pname],[]),
+    spawn_link(?MODULE, timer, [Pid]),
     io:fwrite("server_started~n"),
     register(GameName, Pid),
     {GameName, Pid}.
@@ -115,6 +116,12 @@ handle_cast({"move_up", UserName}, {Pname, LoopData}) ->
 handle_cast({"move_down", UserName}, {Pname, LoopData}) ->
     io:fwrite("moving down ~n"),
     python:call(Pname, snek, move, [UserName, "s"]),
+    {noreply, {Pname, LoopData}};
+handle_cast({"update_board"}, {Pname, LoopData}) ->
+    io:fwrite("requesting board update ~n"),
+    Board = python:call(Pname, snek, get_board, []),
+    io:fwrite("sending_board ~n"),
+    send_board(LoopData, Board),
     {noreply, {Pname, LoopData}}.
 handle_call(_Request, _From, State) ->
     {reply, State}.
@@ -122,6 +129,18 @@ handle_call(_Request, _From, State) ->
 terminate(Reason, _LoopData) ->
     io:fwrite("server_stopping~n"),
     exit(self(), Reason).
+
+timer(ServerPid) ->
+    gen_server:cast(ServerPid, {"update_board"}),
+    timer:sleep(500),
+    timer(ServerPid).
+
+send_board([Username], Board) ->
+    gen_server:cast(Username, {board, Board});
+send_board([Username | Usernames], Board) ->
+    gen_server:cast(Username, {board, Board}),
+    send_board(Usernames, Board).
+ 
 filterOut(_Element, []) -> [];
 filterOut(Element, [Element | Tail]) -> filterOut(Element, Tail);
 filterOut(Element, [Head | Tail]) -> [Head | filterOut(Element, Tail)].
