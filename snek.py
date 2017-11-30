@@ -202,7 +202,7 @@ def _move_check(UserName, newP, oldP):
 				x = players.index(i)
 				players[x] = temparray
 
-		return ('moved', (UserName))
+		return (erlport.erlterms.Atom('moved'), (UserName))
 
 # move(UserName, direc): A function to take in a player and a move and digest it in
 #   the game of snek
@@ -256,7 +256,7 @@ def get_board():
 	global snakes
 	global server
 
-	return {'board', tuple(board)}
+	return (erlport.erlterms.Atom('board'), tuple(board))
 		# TODO: Add powerup logic
 		#  might include adding tail field to player data for death
 		#def add_power_up(self):
