@@ -113,10 +113,10 @@ def remove_player(UserName):
 			snakes.remove(head)
 
 	if len(players) == 0:
-		return ('quit', server)
+		return (erlport.erlterms.Atom('quit'), server)
 
 	else:
-		return ('removed', (UserName))
+		return (erlport.erlterms.Atom('removed'), (UserName))
 	
 
 def get_players():
@@ -256,7 +256,7 @@ def get_board():
 	global snakes
 	global server
 
-	return (erlport.erlterms.Atom('board'), tuple(board))
+	return tuple(board)
 		# TODO: Add powerup logic
 		#  might include adding tail field to player data for death
 		#def add_power_up(self):
