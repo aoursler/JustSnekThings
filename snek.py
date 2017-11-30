@@ -113,10 +113,10 @@ def remove_player(UserName):
 			snakes.remove(head)
 
 	if len(players) == 0:
-		return (erlport.erlterms.Atom('quit'), server)
+		return ('quit', server)
 
 	else:
-		return (erlport.erlterms.Atom('removed'), (UserName))
+		return ('removed', (UserName))
 	
 
 def get_players():
