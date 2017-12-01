@@ -15,7 +15,7 @@
 -export([boardWidth/0, boardHeight/0]).
 
 % SERVER FUNCTION DEFINITIONS
--export([start_link/1, stop/2]).
+-export([start_link/1, stop/1]).
 -export([init/1, terminate/2, handle_call/3, handle_cast/2]).
 -export([filterOut/2]).
 
@@ -92,13 +92,13 @@ receiveMessages() ->
 %   on node HostName, with UserName on noded UserNode
 subscribe( GameName, HostName, UserName, UserNode ) ->
     gen_server:cast( { GameName, HostName }, { subscribe, 
-        { UserName, node() } } ).
+        { UserName, UserNode } } ).
 
 % unsubscribe( HostName, GameName, UserName, UserNode ): unsubscribes from 
 %   GameName on node HostName, UserName/UserNode for unsub
 unsubscribe( HostName, GameName, UserName, UserNode ) ->
     gen_server:cast( { GameName, HostName }, { unsubscribe, 
-        { UserName, node() } } ).
+        { UserName, UserNode } } ).
 
 
 % SERVER FUNCTIONS
@@ -137,14 +137,14 @@ init( Pname ) ->
 handle_cast( { subscribe, UserName, UserNode } , { Pname, LoopData } ) ->
     io:fwrite("subscribing~n"),
     python:call( Pname, snek, add_player, [ UserName, UserNode ] ),
-    { noreply, { Pname, [ ( UserName,UserNode ) | LoopData ] } };
+    { noreply, { Pname, [ { UserName,UserNode } | LoopData ] } };
 
 % handle_cast(unsubscribe): takes in UserName and UserNode for unsubscription,
 %   removes player from python game, updates state
 handle_cast( { unsubscribe, UserName, UserNode }, { Pname, LoopData } ) ->
     io:fwrite("unsubscribing~n"),
     python:call( Pname, snek, remove_player, [ UserName, UserNode ] ),
-    { noreply, { Pname, filterOut( UserName, LoopData ) } };
+    { noreply, { Pname, filterOut( { UserName, UserNode }, LoopData ) } };
 
 % handle_cast(moves): sends UserName, UserNode and move to python game
 %  TODO: from/for Matt: python call returns failure tuple on death. integrate.
@@ -177,10 +177,11 @@ terminate( _Reason, _LoopData ) ->
 
 % filterOut( Element, List) : tail-recursive function removes all instances of
 %   input Element from input List
-filterOut(_Element, []) -> [];
-filterOut( Element, List ) -> filterOut( Element, List, [] );
+filterOut( _Element, []) -> [];
+filterOut( Element, List ) -> filterOut( Element, List, [] ).
 
 % internal filterOut/3 for filterOut/2 tail recursion
+filterOut( _Element, [], Keep ) -> Keep;
 filterOut( Element, [Element | Tail], Keep ) -> 
     filterOut( Element, Tail, Keep );
 filterOut( Element, [Head | Tail], Keep ) -> 
