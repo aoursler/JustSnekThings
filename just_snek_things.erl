@@ -35,7 +35,7 @@ join_game( GameName, HostName, UserName, UserNode ) ->
     % resizes the window to BoardHeight x BoardWidth
     io:fwrite("\e[8;~w;~wt", [boardHeight(), boardWidth()]),
     % registers UserName to the PID of the server->client receive loop
-    register( UserName, spawn_link( ?MODULE, receiveMessages, [] ) ),
+    register( UserName, spawn_link(UserNode, ?MODULE, receiveMessages, [] ) ),
     io:fwrite("joined_game~n"),
     % starts a move loop which will persist until client exit
     move( GameName, HostName, UserName, UserNode ),
