@@ -39,7 +39,7 @@ join_game( GameName, HostName, UserName, UserNode ) ->
     io:fwrite("joined_game~n"),
     % starts a move loop which will persist until client exit
     move( GameName, HostName, UserName, UserNode ),
-    % once move loop ends, player is done: unsubscribe
+    % once move loop ends, player is done: udid a full linking and some light commenting on your .erl file and my python file. python file's not brokenlnsubscribe
     unsubscribe( GameName, HostName, UserName, UserNode ).
 
 % move( GameName, HostName, UserName, UserNode ): main loop to receive moves 
@@ -115,9 +115,10 @@ start_link( GameName ) ->
     % Gameserver is started with gen_server link: passed Pname
     { ok, Pid } = gen_server:start_link( { local, GameName }, ?MODULE, [Pname],[] ),
     io:fwrite( "server_started~n" ),
+    io:fwrite( "~w~n", [Pid]),
     % GameName registered to gameserver PID
-    register( GameName, Pid ),
-    { ok, GameName, node() }.
+    %register( GameName, Pid ),
+    { ok, GameName, node(Pid) }.
 
 % stop( { GameName, NodeName } ): ends the gameserver
 stop( { GameName, NodeName } ) ->
