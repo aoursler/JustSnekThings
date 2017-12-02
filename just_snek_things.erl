@@ -33,10 +33,12 @@ join_game( ServerName, ServerNode, UserName, UserNode ) ->
 
     % subscribes to the given Game on the given Host with the given UserName
     subscribe( ServerName, ServerNode, UserName, UserNode ),
+    io:fwrite("got out of subscribe~n"),
     % resizes the window to BoardHeight x BoardWidth
     io:fwrite("\e[8;~w;~wt", [boardHeight(), boardWidth()]),
     % registers UserName to the PID of the server->client receive loop
-    % register( UserName, spawn_link(UserNode, ?MODULE, receiveMessages, [] ) ),
+
+    %register( UserName, spawn_link(node(), ?MODULE, receiveMessages, [] ) ),
     io:fwrite("joined_game~n"),
     % starts a move loop which will persist until client exit
     move( ServerName, ServerNode, UserName, UserNode ),
@@ -93,6 +95,7 @@ move( ServerName, ServerNode, UserName, UserNode ) ->
 %receiveMessages() ->
 %    io:fwrite("receiving_messages~n"),
 %    receive
+
 %        %TODO: From Matt - this loop will need to maintain, at the very least, 
 %        %   the python PID of Lexi's front end to send it the board
 %        { { Sender, _Node }, Board } -> io:fwrite("~w: ~s", [Sender, Board])
