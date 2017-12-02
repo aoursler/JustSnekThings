@@ -42,7 +42,7 @@ join_game( ServerName, ServerNode, UserName, UserNode ) ->
     %io:fwrite("\e[8;~w;~wt", [boardHeight(), boardWidth()]),
     % registers UserName to the PID of the server->client receive loop
 
-    %register( UserName, spawn_link(node(), ?MODULE, receiveMessages, [] ) ),
+    register( UserName, spawn_link(node(), ?MODULE, receiveMessages, [] ) ),
 
     io:fwrite("joined_game~n"),
     % starts a move loop which will persist until client exit
@@ -96,17 +96,18 @@ move( ServerName, ServerNode, UserName, UserNode ) ->
 % should completely replace the previous game state, and create a new one.
 % Ultimately this will be a junctionn to the client python board PID
 
-%receiveMessages() ->
-%    io:fwrite("receiving_messages~n"),
-%    receive
+receiveMessages() ->
+   io:fwrite("receiving_messages~n"),
+   receive
 
-%        %TODO: From Matt - this loop will need to maintain, at the very least, 
-%        %   the python PID of Lexi's front end to send it the board
-%        { { Sender, _Node }, Board } -> io:fwrite("~w: ~s", [Sender, Board])
-%        %TODO: (lexi) Send board to erlport to display, or other display method.
-%    end,
-%
-%    receiveMessages().
+       %TODO: From Matt - this loop will need to maintain, at the very least, 
+       %   the python PID of Lexi's front end to send it the board
+       
+       { board, Board } -> io:fwrite("Receive Messages Board: ~n~w~n", [Board])
+       %TODO: (lexi) Send board to erlport to display, or other display method.
+   end,
+
+   receiveMessages().
 
 % subscribe( GameName, HostName, UserName, UserNode ):  asks to join GameName 
 %   on node HostName, with UserName on noded UserNode
@@ -240,8 +241,8 @@ timer({ServerName, ServerNode}) ->
 send_board([], _Board) ->
     {ok};
 send_board([{UserName, UserNode}], Board) ->
-    gen_server:cast({UserName, UserNode}, {board, Board});
+    {UserName, UserNode} ! {board, Board};
 send_board([{UserName, UserNode} | Usernames], Board) ->
-    gen_server:cast({UserName, UserNode}, {board, Board}),
+    {UserName, UserNode} ! {board, Board},
     send_board(Usernames, Board).
  
