@@ -1,7 +1,7 @@
 import random
 
-BOARDWIDTH = 160
-BOARDHEIGHT = 40
+BOARDWIDTH = 10 #160
+BOARDHEIGHT = 10 #40
 
 # instantiate a game of Snek and provide a series of function calls
 #	to interact with it 
