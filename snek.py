@@ -9,7 +9,7 @@ BOARDHEIGHT = 40
 
 # make_fields(GameName): takes in a GameName associated with an erlang
 #   gameserver and creates the fields necessary to play a game of snek
-def make_fields(GameName) :
+def make_fields(GameName, GameNode) :
 	
 	global board
 	global players
@@ -17,7 +17,7 @@ def make_fields(GameName) :
 	global server	
 
 	# Server information stored in a tuple
-	server = (GameName)
+	server = (GameName, GameNode)
 		
 	# Board constructed as list with predefined parameters
 	board = [[' ' for x in range(BOARDWIDTH)] \
@@ -41,7 +41,7 @@ def make_fields(GameName) :
 	# List  of currently used snake tokens
 	snakes = []
 		
-	return ('started', (GameName))
+	return ('started', (GameName, GameNode))
 
 
 # find_empty_spot(): Internal function to find empty spot on board for seeding powerups and 
@@ -65,7 +65,7 @@ def find_empty_spot():
 
 # add_player(UserName): Function to add player to game. Takes in UserName and 
 #   generates a random starting location
-def add_player(UserName):
+def add_player(UserName, UserNode):
 
 	global board
 	global players
@@ -74,8 +74,8 @@ def add_player(UserName):
 
 	# Check to see if player is already playing from a UserName
 	for i in players:
-		if (UserName) == i[0]:
-			return ('player already in game', (UserName))
+		if (UserName,UserNode) == i[0]:
+			return ('player already in game', (UserName,UserNode))
 	else:
 
 		# player seed location
@@ -83,7 +83,7 @@ def add_player(UserName):
 
 		# create a new token for the snake
 		snake_head = chr(ord('A'))
-		pTup = (UserName)
+		pTup = (UserName,UserNode)
 		# reroll snake token if necessary
 		while snake_head in snakes:
 			snake_head = chr(ord(snake_head) + 1)
@@ -93,12 +93,12 @@ def add_player(UserName):
 
 		board[seed[0]][seed[1]] = snake_head
 		
-		return ('added', (UserName))
+		return ('added', (UserName,UserNode))
 
 
 # remove_player(UserName): Basic Bookkeeping deletion from players list
 #	Callable on player quit or death. 
-def remove_player(UserName):
+def remove_player(UserName, UserNode):
 
 	global board
 	global players
@@ -107,7 +107,7 @@ def remove_player(UserName):
 
 	# finds the players element to remove
 	for i in players:
-		if i[0] == (UserName):
+		if i[0] == (UserName, UserNode):
 			head = i[2]
 			players.remove(i)
 			snakes.remove(head)
@@ -116,8 +116,8 @@ def remove_player(UserName):
 		return ('quit', server)
 
 	else:
-		return ('removed', (UserName))
-	
+		return ('removed', (UserName,UserNode))
+
 
 def get_players():
 	global players
@@ -133,14 +133,14 @@ def get_snakes():
 
 # _move_check(UserName, newP, oldP): internal function that takes the UserName, 
 #   new location and old location to check if the move is valid
-def _move_check(UserName, newP, oldP):
+def _move_check(UserName, UserNode, newP, oldP):
 		
 	global board
 	global players
 	global snakes
 	global server
 
-	pTup = (UserName)
+	pTup = (UserName, UserNode)
 	# Do nothing if trying to backtrack
 	if newP[0] == oldP[0] and newP[1] == oldP[1]:
 		return
@@ -151,7 +151,7 @@ def _move_check(UserName, newP, oldP):
 	if collis == '*':
 		collis = ' '
 		for i in players:
-			if i[0] == (UserName):
+			if i[0] == (UserName, UserNode):
 				i[5] += 25
 		seed = find_empty_spot()
 		board[seed[0]][seed[1]] = '*'
@@ -160,7 +160,7 @@ def _move_check(UserName, newP, oldP):
 	if collis == '@':
 		collis = ' '
 		for i in players:
-			if i[0] == (UserName):
+			if i[0] == (UserName, UserNode):
 				i[5] += 20
 		seed = find_empty_spot()
 		board[seed[0]][seed[1]] = '*'	
@@ -169,12 +169,12 @@ def _move_check(UserName, newP, oldP):
 	if collis != ' ':
 		# crash - this kills the snek
 		board[oldP[0]][oldP[1]] = ' '
-		return remove_player(UserName)
+		return remove_player(UserName, UserNode)
 
 	else:
 		temparray = None
 		for i in players:
-			if i[0] == (UserName):
+			if i[0] == (UserName, UserNode):
 				temparray = i
 		# make old head space lowercase
 		board[oldP[0]][oldP[1]] = temparray[2].lower()
@@ -188,7 +188,7 @@ def _move_check(UserName, newP, oldP):
 		# every move costs a point
 		temparray[5] -= 1
 		if temparray[5] == 0:
-			return remove_player(UserName)
+			return remove_player(UserName,UserNode)
 
 		# track the snake tail
 		temparray[6].append(oldP)
@@ -198,15 +198,15 @@ def _move_check(UserName, newP, oldP):
 
 		# replace the players element with the updated values
 		for i in players:
-			if i[0] == (UserName):
+			if i[0] == (UserName,UserNode):
 				x = players.index(i)
 				players[x] = temparray
 
-		return (erlport.erlterms.Atom('moved'), (UserName))
+		return ('moved', (UserName, UserNode))
 
 # move(UserName, direc): A function to take in a player and a move and digest it in
 #   the game of snek
-def move(UserName, direc):
+def move(UserName, UserNode, direc):
 
 	global board
 	global players
@@ -214,11 +214,11 @@ def move(UserName, direc):
 	global server
 
 	# construction of player tuple for players array access
-	pTup = (UserName)
+	pTup = (UserName,UserNode)
 	# players array access for current player location
 	oldP = None
 	for i in players:
-		if i[0] == (UserName):
+		if i[0] == (UserName,UserNode):
 			oldP = i[1]
 
 	# Attempted to move up
@@ -226,28 +226,28 @@ def move(UserName, direc):
 				
 		newP = ((oldP[0]-1)%BOARDHEIGHT,oldP[1])
 
-		return _move_check(UserName,newP,oldP)
+		return _move_check(UserName,UserNode,newP,oldP)
 
 	# Attempted to move left
 	elif (direc == 'a' or direc == 'A'):
 
 		newP = (oldP[0],(oldP[1]-1)%BOARDWIDTH)			
 
-		return _move_check(UserName,newP,oldP)
+		return _move_check(UserName,UserNode,newP,oldP)
 
 	# Attempted to move right
 	elif (direc == 'd' or direc == 'D'):
 			
 		newP = (oldP[0],(oldP[1]+1)%BOARDWIDTH)
 
-		return _move_check(UserName,newP,oldP)
+		return _move_check(UserName,UserNode,newP,oldP)
 
 	else:
 			
 		# Attempted to move down
 		newP = ((oldP[0]+1)%BOARDHEIGHT,oldP[1])
 
-		return _move_check(UserName,newP,oldP)
+		return _move_check(UserName,UserNode,newP,oldP)
 
 def get_board():
 
