@@ -56,33 +56,28 @@ move( GameName, HostName, UserName, UserNode ) ->
 
     %Get User Input
     %Move = ,
-    io:fwrite("got a char~n"),
     %TODO: Integrate with Lexi's frontend which will get moves char by char
     %      without pressing ENTER.
     case io:get_line("") of
         "--quit\n" -> { ok  };
         "w\n" ->
             gen_server:cast( { GameName, HostName }, 
-                { move_up, UserName, UserNode } ), 
-            io:fwrite("moved up~n"),
+                { move_up, { UserName, UserNode } } ), 
             move( HostName, GameName, UserName, UserNode );
         
         "a\n" ->
             gen_server:cast( { GameName, HostName }, 
-                { move_left, UserName, UserNode } ),                   
-            io:fwrite("moved left~n"),
+                { move_left, { UserName, UserNode } } ),                   
             move( GameName, HostName, UserName, UserNode );
         
         "s\n" ->
             gen_server:cast( { GameName, HostName }, 
-                { move_down, UserName, UserNode } ),                   
-            io:fwrite("moved down~n"),
+                { move_down, { UserName, UserNode } } ),                   
             move( GameName, HostName, UserName, UserNode );
         
         "d\n" ->
             gen_server:cast( { GameName, HostName }, 
-                { move_right, UserName, UserNode } ),                   
-            io:fwrite("moved right~n"),
+                { move_right, { UserName, UserNode } } ),                   
             move( GameName, HostName, UserName, UserNode );
         
         _Move ->
@@ -108,35 +103,33 @@ move( GameName, HostName, UserName, UserNode ) ->
 % subscribe( GameName, HostName, UserName, UserNode ):  asks to join GameName 
 %   on node HostName, with UserName on noded UserNode
 subscribe( GameName, HostName, UserName, UserNode ) ->
-    gen_server:cast( { GameName, HostName }, { subscribe, 
-        { UserName, UserNode } } ).
+    gen_server:cast( { GameName, HostName }, 
+        { subscribe, { UserName, UserNode } } ).
 
 % unsubscribe( HostName, GameName, UserName, UserNode ): unsubscribes from 
 %   GameName on node HostName, UserName/UserNode for unsub
 unsubscribe( HostName, GameName, UserName, UserNode ) ->
-    gen_server:cast( { GameName, HostName }, { unsubscribe, 
-        { UserName, UserNode } } ).
+    gen_server:cast( { GameName, HostName }, 
+        { unsubscribe, { UserName, UserNode } } ).
 
 
 % SERVER FUNCTIONS
 
-% start_link( GameName ): starts a new game with input GameName. 
+% start_link( ServerName ): starts a new game with input ServerName. 
 %   Python game VM is started and fields initialized. gen_server is started 
-%   and GameName is registered to started server PID. Returns 
-%   { ok, GameName, node() } 
+%   and ServerName is registered to started server PID. Returns 
+%   { ok, ServerName, node() } 
 start_link( ServerName ) ->
     % Python VM started at PID Pname
     { ok, Pname } = python:start(),
     % Pname called to instantiate snek fields
     python:call( Pname, snek, make_fields, [ServerName, node()] ),
-    % Gameserver is started with gen_server link: passed Pname
+    % Game server is started with gen_server link: passed Pname
     { ok, Pid } = gen_server:start_link( { local, ServerName }, 
         ?MODULE, [Pname], [] ),
     %spawn_link(?MODULE, timer, [{ServerName, node(Pid)}]),
     io:fwrite( "server_started~n" ),
     io:fwrite( "~w~n", [Pid]),
-    % GameName registered to gameserver PID
-    %register( GameName, Pid ),
     { ok, ServerName, node(Pid) }.
 
 % stop( { GameName, NodeName } ): ends the gameserver
@@ -175,23 +168,29 @@ handle_cast( { unsubscribe, {UserName, UserNode } }, { Pname, LoopData } ) ->
 
 % handle_cast(moves): sends UserName, UserNode and move to python game
 %  TODO: from/for Matt: python call returns failure tuple on death. integrate.
-handle_cast( { "move_left", UserName, UserNode }, { Pname, LoopData } ) ->
+handle_cast( { move_left, { UserName, UserNode } }, { Pname, LoopData } ) ->
     io:fwrite("moving left ~n"),
     python:call( Pname, snek, move, [UserName, UserNode, "a"] ),  
+    io:fwrite("moved left ~n"),
     { noreply, { Pname, LoopData } };
-handle_cast( { "move_right", UserName, UserNode }, { Pname, LoopData } ) ->
+handle_cast( { move_right, { UserName, UserNode } }, { Pname, LoopData } ) ->
     io:fwrite("moving right ~n"),
     python:call( Pname, snek, move, [UserName, UserNode, "d"] ),  
+    io:fwrite("moved right ~n"),
     { noreply, { Pname, LoopData } };
-handle_cast( { "move_up", UserName, UserNode }, { Pname, LoopData } ) ->
+handle_cast( { move_up, { UserName, UserNode } }, { Pname, LoopData } ) ->
     io:fwrite("moving up ~n"),
     python:call( Pname, snek, move, [UserName, UserNode, "w"] ),  
+    io:fwrite("moved up ~n"),
     { noreply, { Pname, LoopData } };
-handle_cast( { "move_down", UserName, UserNode }, { Pname, LoopData } ) ->
+handle_cast( { move_down, { UserName, UserNode } }, { Pname, LoopData } ) ->
     io:fwrite("moving down ~n"),
     python:call( Pname, snek, move, [UserName, UserNode, "s"] ),
+    io:fwrite("moved down ~n"),
     { noreply, { Pname, LoopData } };
 
+% handle_cast(update_board): takes in UserName and UserNode and triggers,
+%    a call to snek for the board and send the board to all of the users 
 handle_cast({"update_board"}, {Pname, LoopData}) ->
     io:fwrite("requesting board update ~n"),
     {_Info, Board} = python:call(Pname, snek, get_board, []),
