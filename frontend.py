@@ -3,7 +3,7 @@ from erlport.erlterms import Atom
 from erlport.erlang import cast
 
 class snekGUI:
-    def __init__(self, height, width, server):
+    def __init__(self, width, height, server):
         self.server = server
         self.root = Tk()
         self.root.title("JustSnekThings")
