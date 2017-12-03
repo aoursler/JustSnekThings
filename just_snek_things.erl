@@ -103,7 +103,8 @@ receiveMessages() ->
        %TODO: From Matt - this loop will need to maintain, at the very least, 
        %   the python PID of Lexi's front end to send it the board
        
-       { board, Board } -> io:fwrite("Receive Messages Board: ~n~w~n", [Board])
+       { board, Board } -> io:fwrite("Receive Messages Board: ~n"),
+            lists:map(fun(X) -> io:fwrite("~w~n", [X]) end, tuple_to_list(Board))
        %TODO: (lexi) Send board to erlport to display, or other display method.
    end,
 
@@ -182,22 +183,22 @@ handle_cast( { unsubscribe, {UserName, UserNode } }, { [Pname], LoopData } ) ->
 %  TODO: from/for Matt: python call returns failure tuple on death. integrate.
 handle_cast( { move_left, { UserName, UserNode } }, { [Pname], LoopData } ) ->
     io:fwrite("moving left ~n"),
-    python:call( Pname, snek, move, [UserName, UserNode, "a"] ),  
+    python:call( Pname, snek, move, [UserName, UserNode, a] ),  
     io:fwrite("moved left ~n"),
     { noreply, { [Pname], LoopData } };
 handle_cast( { move_right, { UserName, UserNode } }, { [Pname], LoopData } ) ->
     io:fwrite("moving right ~n"),
-    python:call( Pname, snek, move, [UserName, UserNode, "d"] ),  
+    python:call( Pname, snek, move, [UserName, UserNode, d] ),  
     io:fwrite("moved right ~n"),
     { noreply, { [Pname], LoopData } };
 handle_cast( { move_up, { UserName, UserNode } }, { [Pname], LoopData } ) ->
     io:fwrite("moving up ~n"),
-    python:call( Pname, snek, move, [UserName, UserNode, "w"] ),  
+    python:call( Pname, snek, move, [UserName, UserNode, w] ),  
     io:fwrite("moved up ~n"),
     { noreply, { [Pname], LoopData } };
 handle_cast( { move_down, { UserName, UserNode } }, { [Pname], LoopData } ) ->
     io:fwrite("moving down ~n"),
-    python:call( Pname, snek, move, [UserName, UserNode, "s"] ),
+    python:call( Pname, snek, move, [UserName, UserNode, s] ),
     io:fwrite("moved down ~n"),
     { noreply, { [Pname], LoopData } };
 
@@ -206,7 +207,7 @@ handle_cast( { move_down, { UserName, UserNode } }, { [Pname], LoopData } ) ->
 handle_cast({update_board }, { [Pname], LoopData } ) ->
     io:fwrite("requesting board update ~n"),
     Board = python:call(Pname, snek, get_board, []),
-    io:fwrite("~w~n", [Board]),
+    lists:map(fun(X) -> io:fwrite("~w~n",[X]) end, tuple_to_list(Board)),
     io:fwrite("sending_board ~n"),
     send_board(LoopData, Board),
     {noreply, { [Pname], LoopData}}.

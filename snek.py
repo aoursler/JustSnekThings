@@ -109,6 +109,11 @@ def remove_player(UserName, UserNode):
 	for i in players:
 		if i[0] == (UserName, UserNode):
 			head = i[2]
+
+			#removing the tail
+			for j in i[6]:
+				board[j[0]][j[1]] = ' '
+			
 			players.remove(i)
 			snakes.remove(head)
 
@@ -169,6 +174,7 @@ def _move_check(UserName, UserNode, newP, oldP):
 	if collis != ' ':
 		# crash - this kills the snek
 		board[oldP[0]][oldP[1]] = ' '
+
 		return remove_player(UserName, UserNode)
 
 	else:
@@ -215,11 +221,15 @@ def move(UserName, UserNode, direc):
 
 	# construction of player tuple for players array access
 	pTup = (UserName,UserNode)
+
 	# players array access for current player location
 	oldP = None
 	for i in players:
-		if i[0] == (UserName,UserNode):
+		if i[0] == pTup:
 			oldP = i[1]
+
+	if oldP == None:
+		return ('player is dead', pTup)
 
 	# Attempted to move up
 	if (direc == 'w' or direc == 'W'):
