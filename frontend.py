@@ -1,10 +1,10 @@
 from Tkinter import *
-#from erlport.erlterms import Atom
-#from erlport.erlang import call
+from erlport.erlterms import Atom
+from erlport.erlang import cast
 
 class snekGUI:
-    def __init__(self, height, width, GameName, HostName, UserName):
-        self.GameName, self.HostName, self.UserName = GameName, HostName, UserName
+    def __init__(self, width, height, server):
+        self.server = server
         self.root = Tk()
         self.root.title("JustSnekThings")
         self.canvas = Canvas(self.root, width=width, height=height)
@@ -17,25 +17,19 @@ class snekGUI:
 
         self.root.mainloop()
 
-    def left(_, __):
+    def left(self, _):
         print "moved left"
-        # call(Atom("pyserver"), Atom("move"), [GameName, HostName, UserName,
-        #                                         Atom("left")])
-    def right(_, __):
+        cast(self.server, Atom("left"))
+    def right(self, _):
         print "moved right"
-        # call(Atom("pyserver"), Atom("move"), [GameName, HostName, UserName,
-        #                                         Atom("right")])
-    def up(_, __):
+        cast(self.server, Atom("right"))
+    def up(self, _):
         print "moved up"
-        # call(Atom("pyserver"), Atom("move"), [GameName, HostName, UserName,
-        #                                         Atom("up")])
-    def down(_, __):
+        cast(self.server, Atom("up"))
+    def down(self, _):
         print "moved down"
-        # call(Atom("pyserver"), Atom("move"), [GameName, HostName, UserName,
-        #                                         Atom("down")])
+        cast(self.server, Atom("down"))
     def quit(_, __):
         print "quit"
-        # call(Atom("pyserver"), Atom("unsubscribe"), [GameName, HostName,
-        #                                                 UserName])
-
-myboard = snekGUI(500, 700, "game", "host", "username")
+        # call(self.server, Atom("unsubscribe"), [GameName, HostName,
+        #                                                  UserName])
