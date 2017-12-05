@@ -11,13 +11,13 @@
 
 % CLIENT FUNCTION DEFINITIONS
 -export([subscribe/4, unsubscribe/4]).
--export([join_game/4, move/5 ]). %
+-export([join_game/4, move/6 ]). %
 -export([boardWidth/0, boardHeight/0]).
 
 % SERVER FUNCTION DEFINITIONS
 -export([start_link/1, stop/1]).
 -export([init/1, terminate/2, handle_call/3, handle_cast/2]).
--export([filterOut/2, timer/1, receiveMessages/0]).
+-export([filterOut/2, timer/1, get_board/1]).
 
 
 % CLIENT GLOBAL CONSTANTS
@@ -43,7 +43,7 @@ join_game( ServerName, ServerNode, UserName, UserNode ) ->
     % resizes the window to BoardHeight x BoardWidth
     %io:fwrite("\e[8;~w;~wt", [boardHeight(), boardWidth()]),
     % registers UserName to the PID of the server->client receive loop
-    ServerPid = spawn(node(), ?MODULE, move, [ServerName, ServerNode, UserName, UserNode, Pfront] ),
+    ServerPid = spawn(node(), ?MODULE, move, [ServerName, ServerNode, UserName, UserNode, Pfront, {[]}] ),
 
     link(ServerPid),
 
@@ -61,35 +61,35 @@ join_game( ServerName, ServerNode, UserName, UserNode ) ->
 
 % move( GameName, HostName, UserName, UserNode ): main loop to receive moves
 %   from python client to pass through to server
-move( ServerName, ServerNode, UserName, UserNode, Pfront ) ->
+move( ServerName, ServerNode, UserName, UserNode, Pfront, Board) ->
     io:fwrite("got to move~n"),
-
-    %Update the User's Board
     receive
-        { board, Board} ->
-            lists:map(fun(X) -> io:fwrite("~w~n", [X]) end, tuple_to_list(Board)),
-            python:call(Pfront, frontend, print_board, [Board]),
-            move( ServerName, ServerNode, UserName, UserNode, Pfront );
+        { board, NewBoard } ->
+            lists:map(fun(X) -> io:fwrite("~w~n", [X]) end, tuple_to_list(NewBoard)),
+            move( ServerName, ServerNode, UserName, UserNode, Pfront, NewBoard );
 
+        { getBoard, Sender } ->
+            Sender ! Board,
+            move( ServerName, ServerNode, UserName, UserNode, Pfront, Board);
         up ->
             gen_server:cast( { ServerName, ServerNode },
                 { move_up, { UserName, UserNode } } ),
-            move( ServerName, ServerNode, UserName, UserNode, Pfront );
+            move( ServerName, ServerNode, UserName, UserNode, Pfront, Board );
 
         left ->
             gen_server:cast( { ServerName, ServerNode },
                 { move_left, { UserName, UserNode } } ),
-            move( ServerName, ServerNode, UserName, UserNode, Pfront );
+            move( ServerName, ServerNode, UserName, UserNode, Pfront, Board );
 
         down ->
             gen_server:cast( { ServerName, ServerNode },
                 { move_down, { UserName, UserNode } } ),
-            move( ServerName, ServerNode, UserName, UserNode, Pfront );
+            move( ServerName, ServerNode, UserName, UserNode, Pfront, Board );
 
         right ->
             gen_server:cast( { ServerName, ServerNode },
                 { move_right, { UserName, UserNode } } ),
-            move( ServerName, ServerNode, UserName, UserNode, Pfront );
+            move( ServerName, ServerNode, UserName, UserNode, Pfront, Board );
 
         quit ->
             gen_server:cast( { ServerName, ServerNode },
@@ -99,24 +99,14 @@ move( ServerName, ServerNode, UserName, UserNode, Pfront ) ->
             io:fwrite("ERROR, BAD INPUT, NOTHING SENT TO SERVER~n")
     end.
 
-% This is essentially a mailbox that receives the updated board and prints it
-% to the screen repeatedly. Since the screen is the exact size desired, this
-% should completely replace the previous game state, and create a new one.
-% Ultimately this will be a junction to the client python board PID
-% TODO: figure out if we need this in the end tbh
-receiveMessages() ->
-   io:fwrite("receiving_messages~n"),
-   receive
-
-       %TODO: From Matt - this loop will need to maintain, at the very least,
-       %   the python PID of Lexi's front end to send it the board
-
-       { board, Board } -> io:fwrite("Receive Messages Board: ~n"),
-            lists:map(fun(X) -> io:fwrite("~w~n", [X]) end, tuple_to_list(Board))
-       %TODO: (lexi) Send board to erlport to display, or other display method.
-   end,
-
-   receiveMessages().
+% This function fetches the board for the python front end by making a call to
+% the move function. It is the interface between the erlang server and the
+% python frontend.
+get_board(MovePid) ->
+    MovePid ! { getBoard, self() },
+    receive
+        Board -> Board
+    end.
 
 % subscribe( GameName, HostName, UserName, UserNode ):  asks to join GameName
 %   on node HostName, with UserName on noded UserNode

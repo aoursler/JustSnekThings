@@ -1,6 +1,7 @@
 from Tkinter import *
 from erlport.erlterms import Atom
 from erlport.erlang import cast
+from erlport.erlang import call
 import threading
 
 class snekGUI:
@@ -22,7 +23,8 @@ class snekGUI:
         self.root.bind('q', self.quit)
         self.canvas.pack()
 
-        threading.Thread(target=self.root.mainloop).start()
+        self.root.after(0, self.get_board)
+        self.root.mainloop()
 
     def left(self, _):
         print "moved left"
@@ -39,15 +41,17 @@ class snekGUI:
     def quit(self, _):
         print "quit"
         cast(self.server, Atom("quit"))
-    # 
-    # def get_board(self):
-    #     board = call(self.server, Atom("board"))
-    #     print_board(self, board)
+
+    def get_board(self):
+        board = call(Atom("just_snek_things"), Atom("get_board"), [self.server])
+        self.print_board(board)
+        self.root.after(50, self.get_board)
 
     def print_board(self, board):
         print "got to print board"
-        for row in board:
-            for col in row:
+
+        for row in range(board):
+            for col in range(board[row]):
                 print "got in loop"
                 pix = board[row][col]
                 self.canvas.create_rectangle(col*10, row*10, (col+1)*10,
