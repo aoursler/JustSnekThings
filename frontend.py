@@ -8,20 +8,26 @@ global tokenlist
 tokenlist = [' ','*','@','A','a','B','b','C','c'] 
 global colors 
 colors = ['white','spring green','lawn green','maroon2','maroon3','OliveDrab4','OliveDrab1','MediumPurple4','MediumPurple1']
+global boardWidth 
+boardWidth = 50
+global boardHeight
+boardHeight = 50
 
 class snekGUI:
     def __init__(self, width, height, server):
+        global boardWidth
+	global boardHeight
         self.server = server
         self.root = Tk()
         self.root.title("JustSnekThings")
-        self.canvas = Canvas(self.root, width=50*width, height=50*height)
+        self.canvas = Canvas(self.root, width=boardWidth*width, height=boardHeight*height)
         self.root.bind('<Left>', self.left)
         self.root.bind('<Right>', self.right)
         self.root.bind('<Up>', self.up)
         self.root.bind('<Down>', self.down)
         self.root.bind('q', self.quit)
-        self.canvas.pack()
-
+	self.canvas.pack()
+	
         self.root.after(0, self.get_board)
         self.root.mainloop()
 
@@ -57,5 +63,4 @@ class snekGUI:
                 #print "got in loop"
                 pix = board[row][col]
                 color = tokenlist.index(pix)
-                self.canvas.create_rectangle(col*10, row*10, (col+1)*10,
-                                             (row+1)*10, fill=colors[color])
+                self.canvas.create_rectangle(col*10, row*10, (col+1)*10, (row+1)*10, fill=colors[color])
