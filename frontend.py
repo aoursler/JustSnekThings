@@ -4,13 +4,12 @@ from erlport.erlang import cast
 from erlport.erlang import call
 import threading
 
+global tokenlist 
+tokenlist = [' ','*','@','A','a']
+global colors 
+colors = ['white','spring green', 'lawn green','maroon2','maroon3']
+
 class snekGUI:
-    colors = {
-        ' ': "white", '*': "spring green", '@': "lawn green",
-        'A': "maroon2", 'a': "maroon3"
-        #'B': , 'b': , 'C': , 'c': , 'D': , 'd': ,
-        #'E': , 'e': , 'F': , 'f': , 'G': , 'g':
-    }
     def __init__(self, width, height, server):
         self.server = server
         self.root = Tk()
@@ -26,6 +25,10 @@ class snekGUI:
         self.root.after(0, self.get_board)
         self.root.mainloop()
 
+            #' ': "white", '*': "spring green", '@': "lawn green",
+            #'A': "maroon2", 'a': "maroon3"}
+            #'B': , 'b': , 'C': , 'c': , 'D': , 'd': ,
+            #'E': , 'e': , 'F': , 'f': , 'G': , 'g':
     def left(self, _):
         print "moved left"
         cast(self.server, Atom("left"))
@@ -48,11 +51,15 @@ class snekGUI:
         self.root.after(50, self.get_board)
 
     def print_board(self, board):
+        global tokenlist
+        global colors
+
         print "got to print board"
 
-        for row in range(board):
-            for col in range(board[row]):
+        for row in range(len(board)):
+            for col in range(len(board[row])):
                 print "got in loop"
                 pix = board[row][col]
+                color = tokenlist.index(pix)
                 self.canvas.create_rectangle(col*10, row*10, (col+1)*10,
-                                             (row+1)*10, fill=colors[pix])
+                                             (row+1)*10, fill=colors[color])
