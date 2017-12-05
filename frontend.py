@@ -1,13 +1,20 @@
 from Tkinter import *
 from erlport.erlterms import Atom
 from erlport.erlang import cast
+import threading
 
 class snekGUI:
+    colors = {
+        ' ': "white", '*': "spring green", '@': "lawn green",
+        'A': "maroon2", 'a': "maroon3"
+        #'B': , 'b': , 'C': , 'c': , 'D': , 'd': ,
+        #'E': , 'e': , 'F': , 'f': , 'G': , 'g':
+    }
     def __init__(self, width, height, server):
         self.server = server
         self.root = Tk()
         self.root.title("JustSnekThings")
-        self.canvas = Canvas(self.root, width=width, height=height)
+        self.canvas = Canvas(self.root, width=10*width, height=10*height)
         self.root.bind('<Left>', self.left)
         self.root.bind('<Right>', self.right)
         self.root.bind('<Up>', self.up)
@@ -15,7 +22,7 @@ class snekGUI:
         self.root.bind('q', self.quit)
         self.canvas.pack()
 
-        self.root.mainloop()
+        threading.Thread(target=self.root.mainloop).start()
 
     def left(self, _):
         print "moved left"
@@ -29,7 +36,19 @@ class snekGUI:
     def down(self, _):
         print "moved down"
         cast(self.server, Atom("down"))
-    def quit(_, __):
+    def quit(self, _):
         print "quit"
-        # call(self.server, Atom("unsubscribe"), [GameName, HostName,
-        #                                                  UserName])
+        cast(self.server, Atom("quit"))
+    # 
+    # def get_board(self):
+    #     board = call(self.server, Atom("board"))
+    #     print_board(self, board)
+
+    def print_board(self, board):
+        print "got to print board"
+        for row in board:
+            for col in row:
+                print "got in loop"
+                pix = board[row][col]
+                self.canvas.create_rectangle(col*10, row*10, (col+1)*10,
+                                             (row+1)*10, fill=colors[pix])

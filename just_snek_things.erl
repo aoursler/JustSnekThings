@@ -11,7 +11,7 @@
 
 % CLIENT FUNCTION DEFINITIONS
 -export([subscribe/4, unsubscribe/4]).
--export([join_game/4, move/4 ]). %
+-export([join_game/4, move/5 ]). %
 -export([boardWidth/0, boardHeight/0]).
 
 % SERVER FUNCTION DEFINITIONS
@@ -35,7 +35,7 @@ join_game( ServerName, ServerNode, UserName, UserNode ) ->
     io:fwrite("~w~n", [ServerNode]),
     io:fwrite("~w~n", [UserName]),
     io:fwrite("~w~n", [UserNode]),
-  
+
     {ok, Pfront} = python:start([{python_path, "/"}]),
     % subscribes to the given Game on the given Host with the given UserName
     subscribe( ServerName, ServerNode, UserName, UserNode ),
@@ -43,66 +43,74 @@ join_game( ServerName, ServerNode, UserName, UserNode ) ->
     % resizes the window to BoardHeight x BoardWidth
     %io:fwrite("\e[8;~w;~wt", [boardHeight(), boardWidth()]),
     % registers UserName to the PID of the server->client receive loop
+    ServerPid = spawn(node(), ?MODULE, move, [ServerName, ServerNode, UserName, UserNode, Pfront] ),
 
-    register( UserName, spawn_link(node(), ?MODULE, receiveMessages, [] ) ),
+    link(ServerPid),
+
+    register( UserName, ServerPid),
 
     io:fwrite("joined_game~n"),
     % starts a move loop which will persist until client exit
-  
-    ServerPid = spawn(?MODULE, move, [ServerName, ServerNode, UserName, UserNode]),
-    
+
   % starts the frontend
     python:call(Pfront, frontend, snekGUI, [boardWidth(), boardHeight(), ServerPid]).
 
-    % TODO: (lexi probs) figure out how to unsubscribe successfully 
+    % TODO: (lexi probs) figure out how to unsubscribe successfully
     % once move loop ends, player is done: unsubscribe
     % unsubscribe( ServerName, ServerNode, UserName, UserNode ).
 
 % move( GameName, HostName, UserName, UserNode ): main loop to receive moves
 %   from python client to pass through to server
-move( ServerName, ServerNode, UserName, UserNode ) ->
+move( ServerName, ServerNode, UserName, UserNode, Pfront ) ->
     io:fwrite("got to move~n"),
 
     %Update the User's Board
     receive
-        { { Sender, _Node}, Board} -> io:fwrite("~w: ~s ~n", [Sender, Board])
+        { board, Board} ->
+            lists:map(fun(X) -> io:fwrite("~w~n", [X]) end, tuple_to_list(Board)),
+            python:call(Pfront, frontend, print_board, [Board]),
+            move( ServerName, ServerNode, UserName, UserNode, Pfront );
+
         up ->
-            gen_server:cast( { ServerName, ServerNode }, 
-                { move_up, { UserName, UserNode } } ), 
-            move( ServerName, ServerNode, UserName, UserNode );
-        
+            gen_server:cast( { ServerName, ServerNode },
+                { move_up, { UserName, UserNode } } ),
+            move( ServerName, ServerNode, UserName, UserNode, Pfront );
+
         left ->
-            gen_server:cast( { ServerName, ServerNode }, 
-                { move_left, { UserName, UserNode } } ),                   
-            move( ServerName, ServerNode, UserName, UserNode );
-        
+            gen_server:cast( { ServerName, ServerNode },
+                { move_left, { UserName, UserNode } } ),
+            move( ServerName, ServerNode, UserName, UserNode, Pfront );
+
         down ->
-            gen_server:cast( { ServerName, ServerNode }, 
-                { move_down, { UserName, UserNode } } ),                   
-            move( ServerName, ServerNode, UserName, UserNode );
-        
+            gen_server:cast( { ServerName, ServerNode },
+                { move_down, { UserName, UserNode } } ),
+            move( ServerName, ServerNode, UserName, UserNode, Pfront );
+
         right ->
-            gen_server:cast( { ServerName, ServerNode }, 
-                { move_right, { UserName, UserNode } } ),                   
-            move( ServerName, ServerNode, UserName, UserNode );
-        % TODO: write a "quit"
+            gen_server:cast( { ServerName, ServerNode },
+                { move_right, { UserName, UserNode } } ),
+            move( ServerName, ServerNode, UserName, UserNode, Pfront );
+
+        quit ->
+            gen_server:cast( { ServerName, ServerNode },
+                { unsubscribe, { UserName, UserNode } } );
+
         _Move ->
-            io:fwrite("ERROR, BAD INPUT, NOTHING SENT TO SERVER~n"),
-            move( ServerName, ServerNode, UserName, UserNode )
+            io:fwrite("ERROR, BAD INPUT, NOTHING SENT TO SERVER~n")
     end.
 
 % This is essentially a mailbox that receives the updated board and prints it
 % to the screen repeatedly. Since the screen is the exact size desired, this
 % should completely replace the previous game state, and create a new one.
 % Ultimately this will be a junction to the client python board PID
-
+% TODO: figure out if we need this in the end tbh
 receiveMessages() ->
    io:fwrite("receiving_messages~n"),
    receive
 
-       %TODO: From Matt - this loop will need to maintain, at the very least, 
+       %TODO: From Matt - this loop will need to maintain, at the very least,
        %   the python PID of Lexi's front end to send it the board
-       
+
        { board, Board } -> io:fwrite("Receive Messages Board: ~n"),
             lists:map(fun(X) -> io:fwrite("~w~n", [X]) end, tuple_to_list(Board))
        %TODO: (lexi) Send board to erlport to display, or other display method.
@@ -113,14 +121,14 @@ receiveMessages() ->
 % subscribe( GameName, HostName, UserName, UserNode ):  asks to join GameName
 %   on node HostName, with UserName on noded UserNode
 subscribe( ServerName, ServerNode, UserName, UserNode ) ->
-    gen_server:cast( { ServerName, ServerNode }, 
+    gen_server:cast( { ServerName, ServerNode },
         { subscribe, { UserName, UserNode } } ).
 
 % unsubscribe( HostName, GameName, UserName, UserNode ): unsubscribes from
 %   GameName on node HostName, UserName/UserNode for unsub
-
+% TODO: figure out whether this is redundant
 unsubscribe( ServerName, ServerNode, UserName, UserNode ) ->
-    gen_server:cast( { ServerName, ServerNode }, 
+    gen_server:cast( { ServerName, ServerNode },
         { unsubscribe, { UserName, UserNode } } ).
 
 
@@ -128,10 +136,10 @@ unsubscribe( ServerName, ServerNode, UserName, UserNode ) ->
 % SERVER FUNCTIONS
 
 
-% start_link( ServerName ): starts a new game with input ServerName. 
-%   Python game VM is started and fields initialized. gen_server is started 
-%   and ServerName is registered to started server PID. Returns 
-%   { ok, ServerName, node() } 
+% start_link( ServerName ): starts a new game with input ServerName.
+%   Python game VM is started and fields initialized. gen_server is started
+%   and ServerName is registered to started server PID. Returns
+%   { ok, ServerName, node() }
 
 start_link( ServerName ) ->
     % Python VM started at PID Pname
@@ -140,7 +148,7 @@ start_link( ServerName ) ->
     python:call( Pname, snek, make_fields, [ServerName, node()] ),
 
     % Game server is started with gen_server link: passed Pname
-    { ok, Pid } = gen_server:start_link( { local, ServerName }, 
+    { ok, Pid } = gen_server:start_link( { local, ServerName },
 
         ?MODULE, [Pname], [] ),
     spawn_link(?MODULE, timer, [{ServerName, node(Pid)}]),
@@ -165,7 +173,7 @@ init( Pname ) ->
 
 % handle_cast(subscribe): takes in UserName and UserNode for subscription,
 
-%   adds player to python game, updates state 
+%   adds player to python game, updates state
 handle_cast( { subscribe, {UserName, UserNode }} , { [Pname], LoopData } ) ->
     io:fwrite("subscribing~n"),
     %timer:sleep(5000),
@@ -191,17 +199,17 @@ handle_cast( { unsubscribe, {UserName, UserNode } }, { [Pname], LoopData } ) ->
 handle_cast( { move_left, { UserName, UserNode } }, { [Pname], LoopData } ) ->
     io:fwrite("moving left ~n"),
 
-    python:call( Pname, snek, move, [UserName, UserNode, a] ),  
+    python:call( Pname, snek, move, [UserName, UserNode, a] ),
     io:fwrite("moved left ~n"),
     { noreply, { [Pname], LoopData } };
 handle_cast( { move_right, { UserName, UserNode } }, { [Pname], LoopData } ) ->
     io:fwrite("moving right ~n"),
-    python:call( Pname, snek, move, [UserName, UserNode, d] ),  
+    python:call( Pname, snek, move, [UserName, UserNode, d] ),
     io:fwrite("moved right ~n"),
     { noreply, { [Pname], LoopData } };
 handle_cast( { move_up, { UserName, UserNode } }, { [Pname], LoopData } ) ->
     io:fwrite("moving up ~n"),
-    python:call( Pname, snek, move, [UserName, UserNode, w] ),  
+    python:call( Pname, snek, move, [UserName, UserNode, w] ),
     io:fwrite("moved up ~n"),
     { noreply, { [Pname], LoopData } };
 handle_cast( { move_down, { UserName, UserNode } }, { [Pname], LoopData } ) ->
@@ -212,7 +220,7 @@ handle_cast( { move_down, { UserName, UserNode } }, { [Pname], LoopData } ) ->
     { noreply, { [Pname], LoopData } };
 
 % handle_cast(update_board): takes in UserName and UserNode and triggers,
-%    a call to snek for the board and send the board to all of the users 
+%    a call to snek for the board and send the board to all of the users
 handle_cast({update_board }, { [Pname], LoopData } ) ->
     io:fwrite("requesting board update ~n"),
     Board = python:call(Pname, snek, get_board, []),
@@ -245,7 +253,7 @@ filterOut( Element, [Head | Tail], Keep ) ->
 
 timer({ServerName, ServerNode}) ->
     gen_server:cast({ServerName, ServerNode}, {update_board}),
-    timer:sleep(20000),
+    timer:sleep(1000),
     timer({ServerName, ServerNode}).
 
 send_board([], _Board) ->
