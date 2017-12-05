@@ -241,7 +241,7 @@ filterOut( Element, [Head | Tail], Keep ) ->
 
 timer({ServerName, ServerNode}) ->
     gen_server:cast({ServerName, ServerNode}, {update_board}),
-    timer:sleep(1000),
+    timer:sleep(100),
     timer({ServerName, ServerNode}).
 
 send_board([], _Board) ->
