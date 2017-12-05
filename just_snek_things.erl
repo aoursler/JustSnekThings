@@ -21,8 +21,8 @@
 
 
 % CLIENT GLOBAL CONSTANTS
-%boardWidth() -> 10. %160.
-%boardHeight() -> 10. %40.
+boardWidth() -> 50. %160.
+boardHeight() -> 50. %40.
 
 % CLIENT FUNCTIONS
 
@@ -171,7 +171,7 @@ handle_cast( { subscribe, {UserName, UserNode }} , { [Pname], LoopData } ) ->
     %io:fwrite("~w~n", [LoopData]),
     %io:fwrite("~w~n", [UserName]),
     %io:fwrite("~w~n", [UserNode]),
-    Response = python:call( Pname, snek, add_player, [ UserName, UserNode ] ),
+    _Response = python:call( Pname, snek, add_player, [ UserName, UserNode ] ),
     %io:fwrite("~w~n", [Response]),
     %timer:sleep(5000),
     %io:fwrite( "getting out of python call~n"),
