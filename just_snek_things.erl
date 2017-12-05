@@ -21,8 +21,8 @@
 
 
 % CLIENT GLOBAL CONSTANTS
-boardWidth() -> 10. %160.
-boardHeight() -> 10. %40.
+%boardWidth() -> 10. %160.
+%boardHeight() -> 10. %40.
 
 % CLIENT FUNCTIONS
 
@@ -30,16 +30,16 @@ boardHeight() -> 10. %40.
 %   GameName on node NodeName with UserName on cleint UserNode.
 
 join_game( ServerName, ServerNode, UserName, UserNode ) ->
-    io:fwrite("in join game~n"),
-    io:fwrite("~w~n", [ServerName]),
-    io:fwrite("~w~n", [ServerNode]),
-    io:fwrite("~w~n", [UserName]),
-    io:fwrite("~w~n", [UserNode]),
+    %io:fwrite("in join game~n"),
+    %io:fwrite("~w~n", [ServerName]),
+    %io:fwrite("~w~n", [ServerNode]),
+    %io:fwrite("~w~n", [UserName]),
+    %io:fwrite("~w~n", [UserNode]),
 
     {ok, Pfront} = python:start([{python_path, "/"}]),
     % subscribes to the given Game on the given Host with the given UserName
     subscribe( ServerName, ServerNode, UserName, UserNode ),
-    io:fwrite("got out of subscribe~n"),
+    %io:fwrite("got out of subscribe~n"),
     % resizes the window to BoardHeight x BoardWidth
     %io:fwrite("\e[8;~w;~wt", [boardHeight(), boardWidth()]),
     % registers UserName to the PID of the server->client receive loop
@@ -49,7 +49,7 @@ join_game( ServerName, ServerNode, UserName, UserNode ) ->
 
     register( UserName, ServerPid),
 
-    io:fwrite("joined_game~n"),
+    %io:fwrite("joined_game~n"),
     % starts a move loop which will persist until client exit
 
   % starts the frontend
@@ -62,10 +62,10 @@ join_game( ServerName, ServerNode, UserName, UserNode ) ->
 % move( GameName, HostName, UserName, UserNode ): main loop to receive moves
 %   from python client to pass through to server
 move( ServerName, ServerNode, UserName, UserNode, Pfront, Board) ->
-    io:fwrite("got to move~n"),
+    %io:fwrite("got to move~n"),
     receive
         { board, NewBoard } ->
-            lists:map(fun(X) -> io:fwrite("~w~n", [X]) end, tuple_to_list(NewBoard)),
+            %lists:map(fun(X) -> io:fwrite("~w~n", [X]) end, tuple_to_list(NewBoard)),
             move( ServerName, ServerNode, UserName, UserNode, Pfront, NewBoard );
 
         { getBoard, Sender } ->
@@ -142,8 +142,8 @@ start_link( ServerName ) ->
 
         ?MODULE, [Pname], [] ),
     spawn_link(?MODULE, timer, [{ServerName, node(Pid)}]),
-    io:fwrite( "server_started~n" ),
-    io:fwrite( "~w~n", [Pname]),
+    %io:fwrite( "server_started~n" ),
+    %io:fwrite( "~w~n", [Pname]),
     % GameName registered to gameserver PID
     %register( GameName, Pid ),
     { ok, ServerName, node(Pid) }.
@@ -165,57 +165,55 @@ init( Pname ) ->
 
 %   adds player to python game, updates state
 handle_cast( { subscribe, {UserName, UserNode }} , { [Pname], LoopData } ) ->
-    io:fwrite("subscribing~n"),
+    %io:fwrite("subscribing~n"),
     %timer:sleep(5000),
-    io:fwrite("~w~n", [Pname]),
-    io:fwrite("~w~n", [LoopData]),
-    io:fwrite("~w~n", [UserName]),
-    io:fwrite("~w~n", [UserNode]),
+    %io:fwrite("~w~n", [Pname]),
+    %io:fwrite("~w~n", [LoopData]),
+    %io:fwrite("~w~n", [UserName]),
+    %io:fwrite("~w~n", [UserNode]),
     Response = python:call( Pname, snek, add_player, [ UserName, UserNode ] ),
-    io:fwrite("~w~n", [Response]),
+    %io:fwrite("~w~n", [Response]),
     %timer:sleep(5000),
-    io:fwrite( "getting out of python call~n"),
+    %io:fwrite( "getting out of python call~n"),
     { noreply, { [Pname], [ { UserName,UserNode } | LoopData ] } };
 
 % handle_cast(unsubscribe): takes in UserName and UserNode for unsubscription,
 % %   removes player from python game, updates state
 handle_cast( { unsubscribe, {UserName, UserNode } }, { [Pname], LoopData } ) ->
-    io:fwrite("unsubscribing~n"),
+    %io:fwrite("unsubscribing~n"),
     %python:call( Pname, snek, remove_player, [ UserName, UserNode ] ),
     { noreply, { [Pname], filterOut( { UserName, UserNode }, LoopData ) } };
 
 % handle_cast(moves): sends UserName, UserNode and move to python game
 %  TODO: from/for Matt: python call returns failure tuple on death. integrate.
 handle_cast( { move_left, { UserName, UserNode } }, { [Pname], LoopData } ) ->
-    io:fwrite("moving left ~n"),
-
+    %io:fwrite("moving left ~n"),
     python:call( Pname, snek, move, [UserName, UserNode, a] ),
-    io:fwrite("moved left ~n"),
+    %io:fwrite("moved left ~n"),
     { noreply, { [Pname], LoopData } };
 handle_cast( { move_right, { UserName, UserNode } }, { [Pname], LoopData } ) ->
-    io:fwrite("moving right ~n"),
+    %io:fwrite("moving right ~n"),
     python:call( Pname, snek, move, [UserName, UserNode, d] ),
-    io:fwrite("moved right ~n"),
+    %io:fwrite("moved right ~n"),
     { noreply, { [Pname], LoopData } };
 handle_cast( { move_up, { UserName, UserNode } }, { [Pname], LoopData } ) ->
-    io:fwrite("moving up ~n"),
+    %io:fwrite("moving up ~n"),
     python:call( Pname, snek, move, [UserName, UserNode, w] ),
-    io:fwrite("moved up ~n"),
+    %io:fwrite("moved up ~n"),
     { noreply, { [Pname], LoopData } };
 handle_cast( { move_down, { UserName, UserNode } }, { [Pname], LoopData } ) ->
-
-    io:fwrite("moving down ~n"),
+    %io:fwrite("moving down ~n"),
     python:call( Pname, snek, move, [UserName, UserNode, s] ),
-    io:fwrite("moved down ~n"),
+    %io:fwrite("moved down ~n"),
     { noreply, { [Pname], LoopData } };
 
 % handle_cast(update_board): takes in UserName and UserNode and triggers,
 %    a call to snek for the board and send the board to all of the users
 handle_cast({update_board }, { [Pname], LoopData } ) ->
-    io:fwrite("requesting board update ~n"),
+    %io:fwrite("requesting board update ~n"),
     Board = python:call(Pname, snek, get_board, []),
-    lists:map(fun(X) -> io:fwrite("~w~n",[X]) end, tuple_to_list(Board)),
-    io:fwrite("sending_board ~n"),
+    %lists:map(fun(X) -> io:fwrite("~w~n",[X]) end, tuple_to_list(Board)),
+    %io:fwrite("sending_board ~n"),
     send_board(LoopData, Board),
     {noreply, { [Pname], LoopData}}.
 
@@ -226,7 +224,7 @@ handle_call( _Request, _From, State ) ->
 % terminate/2 is an internal function called by the gen_server's stop()
 %   upon exiting to terminate all connected chat client processes.
 terminate( _Reason, _LoopData ) ->
-    io:fwrite("server_stopping~n"),
+    %io:fwrite("server_stopping~n"),
     exit( self(), _Reason ).
 
 % filterOut( Element, List) : tail-recursive function removes all instances of
