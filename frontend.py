@@ -52,7 +52,7 @@ class snekGUI:
     def get_board(self):
         board = call(Atom("just_snek_things"), Atom("get_board"), [self.server])
         self.print_board(board)
-        self.root.after(100, self.get_board)
+        self.root.after(200, self.get_board)
 
     def print_board(self, board):
         global tokenlist

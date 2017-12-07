@@ -21,8 +21,8 @@
 
 
 % CLIENT GLOBAL CONSTANTS
-boardWidth() -> 10. %160.
-boardHeight() -> 10. %40.
+boardWidth() -> 50. %160.
+boardHeight() -> 50. %40.
 
 % CLIENT FUNCTIONS
 
