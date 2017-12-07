@@ -97,7 +97,7 @@ move( ServerName, ServerNode, UserName, UserNode, Pfront, Board) ->
                 { quit, { UserName, UserNode } } ),
             move( ServerName, ServerNode, UserName, UserNode, Pfront, Board );    
             %timer:sleep(1000),
-            %exit(kill);
+            %exit(kill);A
 
         _Move ->
             io:fwrite("ERROR, BAD INPUT, NOTHING SENT TO SERVER~n")
@@ -296,6 +296,7 @@ filterOut( Element, [Element | Tail], Keep ) ->
 filterOut( Element, [Head | Tail], Keep ) ->
     filterOut( Element, Tail, [Keep|Head] ).
 
+%frontendDie( ServerName, )
 timer({ServerName, ServerNode}) ->
     gen_server:cast({ServerName, ServerNode}, {update_board}),
     timer:sleep(250),

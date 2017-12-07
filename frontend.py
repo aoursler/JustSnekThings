@@ -50,9 +50,9 @@ class snekGUI:
     def quit(self, _):
         print "quit"
         cast(self.server, Atom("quit"))
-        # time.sleep(1)
-        # self.root.destroy()
-        # sys.exit(0)
+        time.sleep(1)
+        self.root.destroy()
+        sys.exit(0)
 
     def get_board(self):
         board = call(Atom("just_snek_things"), Atom("get_board"), [self.server])
@@ -70,4 +70,4 @@ class snekGUI:
                 #print "got in loop"
                 pix = board[row][col]
                 color = tokenlist.index(pix)
-                self.canvas.create_rectangle(col*20, row*20, (col+1)*20, (row+1)*20, fill=colors[color])
+                self.canvas.create_rectangle(col*15, row*15, (col+1)*15, (row+1)*15, fill=colors[color])
