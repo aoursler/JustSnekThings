@@ -21,8 +21,8 @@
 
 
 % CLIENT GLOBAL CONSTANTS
-boardWidth() -> 50. %160.
-boardHeight() -> 50. %40.
+boardWidth() -> 10. %160.
+boardHeight() -> 10. %40.
 
 % CLIENT FUNCTIONS
 
@@ -139,8 +139,8 @@ start_link( ServerName ) ->
 
     % Game server is started with gen_server link: passed Pname
     { ok, Pid } = gen_server:start_link( { local, ServerName },
-
         ?MODULE, [Pname], [] ),
+
     spawn_link(?MODULE, timer, [{ServerName, node(Pid)}]),
     %io:fwrite( "server_started~n" ),
     %io:fwrite( "~w~n", [Pname]),
@@ -158,8 +158,9 @@ stop( { ServerName, ServerNode } ) ->
 
 % init( Pname ): internal function to construct state data for gameserver on
 %   gen_server:start_link
-init( Pname ) ->
-    { ok, { Pname, [] } }.
+init( [Pname] ) ->
+    link(Pname),
+    { ok, { [Pname], [] } }.
 
 % handle_cast(subscribe): takes in UserName and UserNode for subscription,
 
@@ -181,39 +182,68 @@ handle_cast( { subscribe, {UserName, UserNode }} , { [Pname], LoopData } ) ->
 % %   removes player from python game, updates state
 handle_cast( { unsubscribe, {UserName, UserNode } }, { [Pname], LoopData } ) ->
     %io:fwrite("unsubscribing~n"),
-    %python:call( Pname, snek, remove_player, [ UserName, UserNode ] ),
+    {Reply, Data} = python:call( Pname, snek, remove_player, [ UserName, UserNode ] ),
+    case Reply of 
+        removed -> {Data} ! exit;
+        quit -> exit( self(), kill);
+        _Reply -> ok
+    end,
     { noreply, { [Pname], filterOut( { UserName, UserNode }, LoopData ) } };
 
 % handle_cast(moves): sends UserName, UserNode and move to python game
 %  TODO: from/for Matt: python call returns failure tuple on death. integrate.
 handle_cast( { move_left, { UserName, UserNode } }, { [Pname], LoopData } ) ->
-    %io:fwrite("moving left ~n"),
-    python:call( Pname, snek, move, [UserName, UserNode, a] ),
+    
+    {Reply, Data} = python:call( Pname, snek, move, [UserName, UserNode, a] ),
+    io:fwrite("~w~n", [Reply]),
+    case Reply of 
+        removed -> {Data} ! exit;
+        quit -> exit( self(), kill);
+        _Reply -> ok
+    end,
     %io:fwrite("moved left ~n"),
     { noreply, { [Pname], LoopData } };
 handle_cast( { move_right, { UserName, UserNode } }, { [Pname], LoopData } ) ->
     %io:fwrite("moving right ~n"),
-    python:call( Pname, snek, move, [UserName, UserNode, d] ),
+    {Reply, Data} = python:call( Pname, snek, move, [UserName, UserNode, d] ),
+    io:fwrite("~w~n", [Reply]),
+    case Reply of 
+        removed -> {Data} ! exit;
+        quit -> exit( self(), kill);
+        _Reply -> ok
+    end,
     %io:fwrite("moved right ~n"),
     { noreply, { [Pname], LoopData } };
 handle_cast( { move_up, { UserName, UserNode } }, { [Pname], LoopData } ) ->
     %io:fwrite("moving up ~n"),
-    python:call( Pname, snek, move, [UserName, UserNode, w] ),
+    {Reply, Data} = python:call( Pname, snek, move, [UserName, UserNode, w] ),
+    io:fwrite("~w~n", [Reply]),
+    case Reply of 
+        removed -> {Data} ! exit;
+        quit -> exit( self(), kill);
+        _Reply -> ok
+    end,
     %io:fwrite("moved up ~n"),
     { noreply, { [Pname], LoopData } };
 handle_cast( { move_down, { UserName, UserNode } }, { [Pname], LoopData } ) ->
     %io:fwrite("moving down ~n"),
-    python:call( Pname, snek, move, [UserName, UserNode, s] ),
+    {Reply, Data} = python:call( Pname, snek, move, [UserName, UserNode, s] ),
+    io:fwrite("~w~n", [Reply]),
+    case Reply of 
+        removed -> {Data} ! exit;
+        quit -> exit( self(), kill);
+        _reply -> ok
+    end,
     %io:fwrite("moved down ~n"),
     { noreply, { [Pname], LoopData } };
 
 % handle_cast(update_board): takes in UserName and UserNode and triggers,
 %    a call to snek for the board and send the board to all of the users
 handle_cast({update_board }, { [Pname], LoopData } ) ->
-    %io:fwrite("requesting board update ~n"),
+    io:fwrite("requesting board update ~n"),
     Board = python:call(Pname, snek, get_board, []),
     %lists:map(fun(X) -> io:fwrite("~w~n",[X]) end, tuple_to_list(Board)),
-    %io:fwrite("sending_board ~n"),
+    io:fwrite("sending_board ~n"),
     send_board(LoopData, Board),
     {noreply, { [Pname], LoopData}}.
 
@@ -223,9 +253,9 @@ handle_call( _Request, _From, State ) ->
 
 % terminate/2 is an internal function called by the gen_server's stop()
 %   upon exiting to terminate all connected chat client processes.
-terminate( _Reason, _LoopData ) ->
+terminate( kill, _LoopData ) ->
     %io:fwrite("server_stopping~n"),
-    exit( self(), _Reason ).
+    exit( self(), kill ).
 
 % filterOut( Element, List) : tail-recursive function removes all instances of
 %   input Element from input List

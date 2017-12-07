@@ -16,9 +16,10 @@ boardHeight = 50
 class snekGUI:
     def __init__(self, width, height, server):
         global boardWidth
-	global boardHeight
+        global boardHeight
         self.server = server
         self.root = Tk()
+        self.root.geometry('1002x1002')
         self.root.title("JustSnekThings")
         self.canvas = Canvas(self.root, width=boardWidth*width, height=boardHeight*height)
         self.root.bind('<Left>', self.left)
@@ -26,9 +27,9 @@ class snekGUI:
         self.root.bind('<Up>', self.up)
         self.root.bind('<Down>', self.down)
         self.root.bind('q', self.quit)
-	self.canvas.pack()
+        self.canvas.pack()
 	
-        self.root.after(0, self.get_board)
+        self.root.after(100, self.get_board)
         self.root.mainloop()
 
     def left(self, _):
@@ -46,11 +47,12 @@ class snekGUI:
     def quit(self, _):
         print "quit"
         cast(self.server, Atom("quit"))
+        self.root.destroy()
 
     def get_board(self):
         board = call(Atom("just_snek_things"), Atom("get_board"), [self.server])
         self.print_board(board)
-        self.root.after(50, self.get_board)
+        self.root.after(100, self.get_board)
 
     def print_board(self, board):
         global tokenlist
@@ -63,4 +65,4 @@ class snekGUI:
                 #print "got in loop"
                 pix = board[row][col]
                 color = tokenlist.index(pix)
-                self.canvas.create_rectangle(col*10, row*10, (col+1)*10, (row+1)*10, fill=colors[color])
+                self.canvas.create_rectangle(col*20, row*20, (col+1)*20, (row+1)*20, fill=colors[color])

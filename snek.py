@@ -1,10 +1,16 @@
 import random
+from erlport.erlterms import Atom
 
 BOARDWIDTH = 50 #160
 BOARDHEIGHT = 50 #40
 
 # instantiate a game of Snek and provide a series of function calls
 #	to interact with it 
+
+global board
+global players
+global snakes
+global server
 	
 
 # make_fields(GameName): takes in a GameName associated with an erlang
@@ -24,12 +30,14 @@ def make_fields(GameName, GameNode) :
 		for y in range(BOARDHEIGHT)]
 		
 	# finds an empty spot for a powerup
-	seed = find_empty_spot()
-	board[seed[0]][seed[1]] = '*'
+	for i in range(3):
+		seed = find_empty_spot()
+		board[seed[0]][seed[1]] = '*'
 
 	# finds an empty spot for another powerup
-	seed = find_empty_spot()
-	board[seed[0]][seed[1]] = '@'
+	for i in range(3):
+		seed = find_empty_spot()
+		board[seed[0]][seed[1]] = '@'
 
 
 	# Current players and locations stored in players array for fast access
@@ -41,7 +49,7 @@ def make_fields(GameName, GameNode) :
 	# List  of currently used snake tokens
 	snakes = []
 		
-	return ('started', (GameName, GameNode))
+	return (Atom('started'), (GameName, GameNode))
 
 
 # find_empty_spot(): Internal function to find empty spot on board for seeding powerups and 
@@ -75,7 +83,7 @@ def add_player(UserName, UserNode):
 	# Check to see if player is already playing from a UserName
 	for i in players:
 		if (UserName,UserNode) == i[0]:
-			return ('player already in game', (UserName,UserNode))
+			return (Atom('duplicate'), (UserName,UserNode))
 	else:
 
 		# player seed location
@@ -93,7 +101,14 @@ def add_player(UserName, UserNode):
 
 		board[seed[0]][seed[1]] = snake_head
 		
-		return ('added', (UserName,UserNode))
+		seed = find_empty_spot()
+		board[seed[0]][seed[1]] = '*'
+
+		seed = find_empty_spot()
+		board[seed[0]][seed[1]] = '@'
+
+		
+		return (Atom('added'), (UserName,UserNode))
 
 
 # remove_player(UserName): Basic Bookkeeping deletion from players list
@@ -118,10 +133,10 @@ def remove_player(UserName, UserNode):
 			snakes.remove(head)
 
 	if len(players) == 0:
-		return ('quit', server)
+		return (Atom('quit'), (UserName,UserNode))
 
 	else:
-		return ('removed', (UserName,UserNode))
+		return (Atom('removed'), (UserName,UserNode))
 
 
 def get_players():
@@ -146,27 +161,28 @@ def _move_check(UserName, UserNode, newP, oldP):
 	global server
 
 	pTup = (UserName, UserNode)
+	temparray = None
+	for i in players:
+		if i[0] == pTup:
+			temparray = i
+
 	# Do nothing if trying to backtrack
-	if newP[0] == oldP[0] and newP[1] == oldP[1]:
-		return
+	if newP[0] == temparray[4][0] and newP[1] == temparray[4][1]:
+		return (Atom('moved'), pTup)
 
 	collis = board[newP[0]][newP[1]]
 	
 	# collision with powerup	
 	if collis == '*':
 		collis = ' '
-		for i in players:
-			if i[0] == (UserName, UserNode):
-				i[5] += 25
+		temparray[5] += 25
 		seed = find_empty_spot()
 		board[seed[0]][seed[1]] = '*'
 			
 	# collision with powerup		
-	if collis == '@':
-		collis = ' '
-		for i in players:
-			if i[0] == (UserName, UserNode):
-				i[5] += 20
+	elif collis == '@':
+		collis = ' '		
+		temparray[5] += 20
 		seed = find_empty_spot()
 		board[seed[0]][seed[1]] = '*'	
 
@@ -178,10 +194,6 @@ def _move_check(UserName, UserNode, newP, oldP):
 		return remove_player(UserName, UserNode)
 
 	else:
-		temparray = None
-		for i in players:
-			if i[0] == (UserName, UserNode):
-				temparray = i
 		# make old head space lowercase
 		board[oldP[0]][oldP[1]] = temparray[2].lower()
 		# make new head space non-space
@@ -208,7 +220,7 @@ def _move_check(UserName, UserNode, newP, oldP):
 				x = players.index(i)
 				players[x] = temparray
 
-		return ('moved', (UserName, UserNode))
+		return (Atom('moved'), (UserName, UserNode))
 
 # move(UserName, direc): A function to take in a player and a move and digest it in
 #   the game of snek
@@ -229,7 +241,7 @@ def move(UserName, UserNode, direc):
 			oldP = i[1]
 
 	if oldP == None:
-		return ('player is dead', pTup)
+		return (remove_player(pTup))
 
 	# Attempted to move up
 	if (direc == 'w' or direc == 'W'):
