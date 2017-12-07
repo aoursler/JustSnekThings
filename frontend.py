@@ -5,9 +5,27 @@ from erlport.erlang import call
 import threading
 
 global tokenlist 
-tokenlist = [' ','*','@','A','a','B','b','C','c'] 
-global colors 
-colors = ['white','spring green','lawn green','maroon2','maroon3','OliveDrab4','OliveDrab1','MediumPurple4','MediumPurple1']
+tokenlist = [' ','*','@',\
+	     'A','a','B','b','C','c',\
+	     'D','d','E','e','F','f',\
+             'G','g','H','h','I','i',\
+             'J','j','K','k','L','l',\
+             'M','m','N','n','O','o',\
+             'P','p','Q','q','R','r',\
+             'S','s','T','t','U','u',\
+             'V','v','W','w','X','x',\
+	     'Y','y','Z','z']
+global colors
+colors = ['white','spring green','dark green',\
+	  'maroon2','maroon3','OliveDrab4','OliveDrab1','MediumPurple4','MediumPurple1'\
+          'deep sky blue','sky blue','dark orchid','medium orchid','gold4','gold3'\
+          'PaleTurquoise4','PaleTurquoise3','blue4','blue2','maroon','pale violet red'\
+          'yellow','light yellow','sienna4','sienna3','cyan','turquoise'\
+          'dark orange', 'orange','seashell4','seashell3','LightSteelBlue3','LightSteelBlue2'\
+          'aquamarine4','aquamarine2','burlywood4','burlywood3','SlateBlue4','SlateBlue3'\
+          'dark slate blue','medium slate blue','SpringGreen4','SpringGreen3','thistle3','thistle1'\
+          'RosyBrown3','RosyBrown1','purple4','purple3','LightBlue4','LightBlue3',\
+          'grey42','grey54','khaki4','khaki3','DeepPink4','DeepPink3']
 global boardWidth 
 boardWidth = 50
 global boardHeight
