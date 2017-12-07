@@ -21,7 +21,7 @@ class snekGUI:
         global boardHeight
         self.server = server
         self.root = Tk()
-        self.root.geometry('1002x1002')
+        self.root.geometry('751x751')
         self.root.title("JustSnekThings")
         self.canvas = Canvas(self.root, width=boardWidth*width, height=boardHeight*height)
         self.root.bind('<Left>', self.left)
