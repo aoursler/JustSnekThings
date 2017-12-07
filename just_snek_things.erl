@@ -43,9 +43,7 @@ join_game( ServerName, ServerNode, UserName, UserNode ) ->
     % resizes the window to BoardHeight x BoardWidth
     %io:fwrite("\e[8;~w;~wt", [boardHeight(), boardWidth()]),
     % registers UserName to the PID of the server->client receive loop
-    ServerPid = spawn(node(), ?MODULE, move, [ServerName, ServerNode, UserName, UserNode, Pfront, {[]}] ),
-
-    link(ServerPid),
+    ServerPid = spawn_link(node(), ?MODULE, move, [ServerName, ServerNode, UserName, UserNode, Pfront, {[]}] ),
 
     register( UserName, ServerPid),
 
@@ -64,6 +62,9 @@ join_game( ServerName, ServerNode, UserName, UserNode ) ->
 move( ServerName, ServerNode, UserName, UserNode, Pfront, Board) ->
     %io:fwrite("got to move~n"),
     receive
+        link -> link(Pfront),
+                move( ServerName, ServerNode, UserName, UserNode, Pfront, Board );    
+
         { board, NewBoard } ->
             %lists:map(fun(X) -> io:fwrite("~w~n", [X]) end, tuple_to_list(NewBoard)),
             move( ServerName, ServerNode, UserName, UserNode, Pfront, NewBoard );
@@ -93,7 +94,10 @@ move( ServerName, ServerNode, UserName, UserNode, Pfront, Board) ->
 
         quit ->
             gen_server:cast( { ServerName, ServerNode },
-                { unsubscribe, { UserName, UserNode } } );
+                { quit, { UserName, UserNode } } ),
+            move( ServerName, ServerNode, UserName, UserNode, Pfront, Board );    
+            %timer:sleep(1000),
+            %exit(kill);
 
         _Move ->
             io:fwrite("ERROR, BAD INPUT, NOTHING SENT TO SERVER~n")
@@ -182,56 +186,79 @@ handle_cast( { subscribe, {UserName, UserNode }} , { [Pname], LoopData } ) ->
 % %   removes player from python game, updates state
 handle_cast( { unsubscribe, {UserName, UserNode } }, { [Pname], LoopData } ) ->
     %io:fwrite("unsubscribing~n"),
-    {Reply, Data} = python:call( Pname, snek, remove_player, [ UserName, UserNode ] ),
+    {Reply, {Uname,Unode}} = python:call( Pname, snek, remove_player, [ UserName, UserNode ] ),
+    USName = rpc:call(Unode,erlang,whereis,[Uname]),
     case Reply of 
-        removed -> {Data} ! exit;
-        quit -> exit( self(), kill);
+        removed -> rpc:cast(Unode, erlang, exit, [USName, kill]);
+        serverQuit -> rpc:cast(Unode, erlang, exit, [USName, kill]),
+                        exit( self(), kill);
         _Reply -> ok
     end,
     { noreply, { [Pname], filterOut( { UserName, UserNode }, LoopData ) } };
 
 % handle_cast(moves): sends UserName, UserNode and move to python game
 %  TODO: from/for Matt: python call returns failure tuple on death. integrate.
+handle_cast( { quit, { UserName, UserNode } }, { [Pname], LoopData } ) ->
+    
+    {Reply, {Uname,Unode}} = python:call( Pname, snek, move, [UserName, UserNode, quit] ),
+    io:fwrite("~w~n", [Reply]),
+    USName = rpc:call(Unode,erlang,whereis,[Uname]),
+    case Reply of 
+        removed -> rpc:cast(Unode, erlang, exit, [USName, kill]);
+        serverQuit -> rpc:cast(Unode, erlang, exit, [USName, kill]),
+                        exit( self(), kill);
+        _Reply -> ok
+    end,
+    { noreply, { [Pname], LoopData } };
+
 handle_cast( { move_left, { UserName, UserNode } }, { [Pname], LoopData } ) ->
     
-    {Reply, Data} = python:call( Pname, snek, move, [UserName, UserNode, a] ),
+    {Reply, {Uname,Unode}} = python:call( Pname, snek, move, [UserName, UserNode, a] ),
     io:fwrite("~w~n", [Reply]),
+    USName = rpc:call(Unode,erlang,whereis,[Uname]),
     case Reply of 
-        removed -> {Data} ! exit;
-        quit -> exit( self(), kill);
+        removed -> rpc:cast(Unode, erlang, exit, [USName, kill]);
+        serverQuit -> rpc:cast(Unode, erlang, exit, [USName, kill]),
+                        exit( self(), kill);
         _Reply -> ok
     end,
     %io:fwrite("moved left ~n"),
     { noreply, { [Pname], LoopData } };
 handle_cast( { move_right, { UserName, UserNode } }, { [Pname], LoopData } ) ->
     %io:fwrite("moving right ~n"),
-    {Reply, Data} = python:call( Pname, snek, move, [UserName, UserNode, d] ),
+    {Reply, {Uname,Unode}} = python:call( Pname, snek, move, [UserName, UserNode, d] ),
     io:fwrite("~w~n", [Reply]),
+    USName = rpc:call(Unode,erlang,whereis,[Uname]),
     case Reply of 
-        removed -> {Data} ! exit;
-        quit -> exit( self(), kill);
+        removed -> rpc:cast(Unode, erlang, exit, [USName, kill]);
+        serverQuit -> rpc:cast(Unode, erlang, exit, [USName, kill]),
+                        exit( self(), kill);
         _Reply -> ok
     end,
     %io:fwrite("moved right ~n"),
     { noreply, { [Pname], LoopData } };
 handle_cast( { move_up, { UserName, UserNode } }, { [Pname], LoopData } ) ->
     %io:fwrite("moving up ~n"),
-    {Reply, Data} = python:call( Pname, snek, move, [UserName, UserNode, w] ),
+    {Reply, {Uname,Unode}} = python:call( Pname, snek, move, [UserName, UserNode, w] ),
     io:fwrite("~w~n", [Reply]),
+    USName = rpc:call(Unode,erlang,whereis,[Uname]),
     case Reply of 
-        removed -> {Data} ! exit;
-        quit -> exit( self(), kill);
+        removed -> rpc:cast(Unode, erlang, exit, [USName, kill]);
+        serverQuit -> rpc:cast(Unode, erlang, exit, [USName, kill]),
+                        exit( self(), kill);
         _Reply -> ok
     end,
     %io:fwrite("moved up ~n"),
     { noreply, { [Pname], LoopData } };
 handle_cast( { move_down, { UserName, UserNode } }, { [Pname], LoopData } ) ->
     %io:fwrite("moving down ~n"),
-    {Reply, Data} = python:call( Pname, snek, move, [UserName, UserNode, s] ),
+    {Reply, {Uname,Unode}} = python:call( Pname, snek, move, [UserName, UserNode, s] ),
     io:fwrite("~w~n", [Reply]),
+    USName = rpc:call(Unode,erlang,whereis,[Uname]),
     case Reply of 
-        removed -> {Data} ! exit;
-        quit -> exit( self(), kill);
+        removed -> rpc:cast(Unode, erlang, exit, [USName, kill]);
+        serverQuit -> rpc:cast(Unode, erlang, exit, [USName, kill]),
+                        exit( self(), kill);
         _reply -> ok
     end,
     %io:fwrite("moved down ~n"),

@@ -49,7 +49,7 @@ def make_fields(GameName, GameNode) :
 	# List  of currently used snake tokens
 	snakes = []
 		
-	return (Atom('started'), (GameName, GameNode))
+	return (Atom('started'), (Atom(GameName), Atom(GameNode)))
 
 
 # find_empty_spot(): Internal function to find empty spot on board for seeding powerups and 
@@ -83,32 +83,32 @@ def add_player(UserName, UserNode):
 	# Check to see if player is already playing from a UserName
 	for i in players:
 		if (UserName,UserNode) == i[0]:
-			return (Atom('duplicate'), (UserName,UserNode))
-	else:
+			return (Atom('duplicate'), (Atom(UserName),Atom(UserNode)))
+	
 
-		# player seed location
-		seed = find_empty_spot()
+	# player seed location
+	seed = find_empty_spot()
 
-		# create a new token for the snake
-		snake_head = chr(ord('A'))
-		pTup = (UserName,UserNode)
-		# reroll snake token if necessary
-		while snake_head in snakes:
-			snake_head = chr(ord(snake_head) + 1)
-		players.append([pTup,seed, \
-		snake_head, 0, seed, 50, []])
-		snakes.append(snake_head)
+	# create a new token for the snake
+	snake_head = chr(ord('A'))
+	pTup = (UserName,UserNode)
+	# reroll snake token if necessary
+	while snake_head in snakes:
+		snake_head = chr(ord(snake_head) + 1)
+	players.append([pTup,seed, \
+	snake_head, 0, seed, 50, []])
+	snakes.append(snake_head)
 
-		board[seed[0]][seed[1]] = snake_head
+	board[seed[0]][seed[1]] = snake_head
 		
-		seed = find_empty_spot()
-		board[seed[0]][seed[1]] = '*'
+	seed = find_empty_spot()
+	board[seed[0]][seed[1]] = '*'
 
-		seed = find_empty_spot()
-		board[seed[0]][seed[1]] = '@'
+	seed = find_empty_spot()
+	board[seed[0]][seed[1]] = '@'
 
 		
-		return (Atom('added'), (UserName,UserNode))
+	return (Atom('added'), (Atom(UserName),Atom(UserNode)))
 
 
 # remove_player(UserName): Basic Bookkeeping deletion from players list
@@ -133,10 +133,10 @@ def remove_player(UserName, UserNode):
 			snakes.remove(head)
 
 	if len(players) == 0:
-		return (Atom('quit'), (UserName,UserNode))
+		return (Atom('serverQuit'), (Atom(UserName),Atom(UserNode)))
 
 	else:
-		return (Atom('removed'), (UserName,UserNode))
+		return (Atom('removed'), (Atom(UserName),Atom(UserNode)))
 
 
 def get_players():
@@ -220,7 +220,7 @@ def _move_check(UserName, UserNode, newP, oldP):
 				x = players.index(i)
 				players[x] = temparray
 
-		return (Atom('moved'), (UserName, UserNode))
+		return (Atom('moved'), (Atom(UserName), Atom(UserNode)))
 
 # move(UserName, direc): A function to take in a player and a move and digest it in
 #   the game of snek
@@ -242,6 +242,10 @@ def move(UserName, UserNode, direc):
 
 	if oldP == None:
 		return (remove_player(pTup))
+
+	if (direc == 'quit'):
+
+		return remove_player(UserName,UserNode)
 
 	# Attempted to move up
 	if (direc == 'w' or direc == 'W'):

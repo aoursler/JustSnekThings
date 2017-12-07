@@ -2,7 +2,9 @@ from Tkinter import *
 from erlport.erlterms import Atom
 from erlport.erlang import cast
 from erlport.erlang import call
+from sys import *
 import threading
+import time
 
 global tokenlist 
 tokenlist = [' ','*','@','A','a','B','b','C','c'] 
@@ -30,6 +32,7 @@ class snekGUI:
         self.canvas.pack()
 	
         self.root.after(100, self.get_board)
+        cast(self.server, Atom("link"))
         self.root.mainloop()
 
     def left(self, _):
@@ -47,7 +50,9 @@ class snekGUI:
     def quit(self, _):
         print "quit"
         cast(self.server, Atom("quit"))
-        self.root.destroy()
+        # time.sleep(1)
+        # self.root.destroy()
+        # sys.exit(0)
 
     def get_board(self):
         board = call(Atom("just_snek_things"), Atom("get_board"), [self.server])
