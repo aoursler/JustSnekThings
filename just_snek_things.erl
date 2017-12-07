@@ -143,10 +143,10 @@ handle_cast( { subscribe, {UserName, UserNode }} , { [Pname], LoopData } ) ->
 %    removes player from python game, updates state
 handle_cast( { unsubscribe, {UserName, UserNode } }, { [Pname], LoopData } ) ->
     {Reply, {Uname,Unode}} = python:call( Pname, snek, remove_player, [ UserName, UserNode ] ),
-    USName = rpc:call(Unode,erlang,whereis,[Uname]),
+    Board = die,
     case Reply of 
-        removed -> rpc:cast(Unode, erlang, exit, [USName, kill]);
-        serverQuit -> rpc:cast(Unode, erlang, exit, [USName, kill]),
+        removed -> send_board( [{ UserName, UserNode }], die);
+        serverQuit -> send_board( [{ UserName, UserNode }], die),
                         exit( self(), kill);
         _Reply -> ok
     end,
@@ -156,10 +156,11 @@ handle_cast( { unsubscribe, {UserName, UserNode } }, { [Pname], LoopData } ) ->
 %    is removed from the game, then shuts down the cleint's front end
 handle_cast( { quit, { UserName, UserNode } }, { [Pname], LoopData } ) ->
     {Reply, {Uname,Unode}} = python:call( Pname, snek, move, [UserName, UserNode, quit] ),
-    USName = rpc:call(Unode,erlang,whereis,[Uname]),
+    %USName = rpc:call(Unode,erlang,whereis,[Uname]),
+    Board = die,
     case Reply of 
-        removed -> rpc:cast(Unode, erlang, exit, [USName, kill]);
-        serverQuit -> rpc:cast(Unode, erlang, exit, [USName, kill]),
+        removed -> send_board( [{ UserName, UserNode }], die);
+        serverQuit -> send_board( [{ UserName, UserNode }], die),
                         exit( self(), kill);
         _Reply -> ok
     end,
@@ -169,10 +170,9 @@ handle_cast( { quit, { UserName, UserNode } }, { [Pname], LoopData } ) ->
 %    if the client is dead in the server, it shuts down the client
 handle_cast( { move_left, { UserName, UserNode } }, { [Pname], LoopData } ) ->    
     {Reply, {Uname,Unode}} = python:call( Pname, snek, move, [UserName, UserNode, a] ),
-    USName = rpc:call(Unode,erlang,whereis,[Uname]),
     case Reply of 
-        removed -> rpc:cast(Unode, erlang, exit, [USName, kill]);
-        serverQuit -> rpc:cast(Unode, erlang, exit, [USName, kill]),
+        removed -> send_board( [{ UserName, UserNode }], die);
+        serverQuit -> send_board( [{ UserName, UserNode }], die),
                         exit( self(), kill);
         _Reply -> ok
     end,
@@ -180,10 +180,9 @@ handle_cast( { move_left, { UserName, UserNode } }, { [Pname], LoopData } ) ->
 
 handle_cast( { move_right, { UserName, UserNode } }, { [Pname], LoopData } ) ->
     {Reply, {Uname,Unode}} = python:call( Pname, snek, move, [UserName, UserNode, d] ),
-    USName = rpc:call(Unode,erlang,whereis,[Uname]),
     case Reply of 
-        removed -> rpc:cast(Unode, erlang, exit, [USName, kill]);
-        serverQuit -> rpc:cast(Unode, erlang, exit, [USName, kill]),
+        removed -> send_board( [{ UserName, UserNode }], die);
+        serverQuit -> send_board( [{ UserName, UserNode }], die),
                         exit( self(), kill);
         _Reply -> ok
     end,
@@ -191,10 +190,9 @@ handle_cast( { move_right, { UserName, UserNode } }, { [Pname], LoopData } ) ->
 
 handle_cast( { move_up, { UserName, UserNode } }, { [Pname], LoopData } ) ->
     {Reply, {Uname,Unode}} = python:call( Pname, snek, move, [UserName, UserNode, w] ),
-    USName = rpc:call(Unode,erlang,whereis,[Uname]),
     case Reply of 
-        removed -> rpc:cast(Unode, erlang, exit, [USName, kill]);
-        serverQuit -> rpc:cast(Unode, erlang, exit, [USName, kill]),
+        removed -> send_board( [{ UserName, UserNode }], die);
+        serverQuit -> send_board([ { UserName, UserNode }], die),
                         exit( self(), kill);
         _Reply -> ok
     end,
@@ -202,10 +200,9 @@ handle_cast( { move_up, { UserName, UserNode } }, { [Pname], LoopData } ) ->
 
 handle_cast( { move_down, { UserName, UserNode } }, { [Pname], LoopData } ) ->
     {Reply, {Uname,Unode}} = python:call( Pname, snek, move, [UserName, UserNode, s] ),
-    USName = rpc:call(Unode,erlang,whereis,[Uname]),
     case Reply of 
-        removed -> rpc:cast(Unode, erlang, exit, [USName, kill]);
-        serverQuit -> rpc:cast(Unode, erlang, exit, [USName, kill]),
+        removed -> send_board( [{ UserName, UserNode }], die);
+        serverQuit -> send_board( [{ UserName, UserNode }], die),
                         exit( self(), kill);
         _reply -> ok
     end,
