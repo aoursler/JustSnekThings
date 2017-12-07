@@ -241,7 +241,7 @@ def move(UserName, UserNode, direc):
 			oldP = i[1]
 
 	if oldP == None:
-		return (remove_player(pTup))
+		return (remove_player(UserName,UserNode))
 
 	if (direc == 'quit'):
 
