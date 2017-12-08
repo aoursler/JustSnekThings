@@ -13,9 +13,20 @@ global snakes
 global server
 	
 
-# make_fields(GameName): takes in a GameName associated with an erlang
-#   gameserver and creates the fields necessary to play a game of snek
-def make_fields(GameName, GameNode) :
+def make_fields(GameName, GameNode):
+	"""
+	make_fields( GameName, GameNode ): 
+
+		Interface function which takes in a GameName associated with an 
+		erlang gameserver and creates the fields necessary to play a 
+		game of snek.
+
+		Inputs:		GameName: An input gameserver name
+					GameNode: The gameserver's erlang node
+		Outputs:	A callback tuple to the calling erlang process of 
+					successful game instantiation
+	"""
+
 	
 	global board
 	global players
@@ -52,9 +63,16 @@ def make_fields(GameName, GameNode) :
 	return (Atom('started'), (Atom(GameName), Atom(GameNode)))
 
 
-# find_empty_spot(): Internal function to find empty spot on board for
-# seeding powerups and new players
 def find_empty_spot():
+	"""
+	find_empty_spot(): 
+
+		Internal function which finds and returns an empty spot on the
+		global board to be used for seeding of players and powerups
+
+		Outputs:	A tuple representing the 2d array index of the 
+					free space
+	"""	
 	
 	global board
 	global players
@@ -71,9 +89,18 @@ def find_empty_spot():
 	return seed
 
 
-# add_player(UserName): Function to add player to game. Takes in UserName
-# and generates a random starting location
 def add_player(UserName, UserNode):
+	"""
+	add_player( UserName, UserNode ):
+
+		Interface function which generates all bookkeeping and updates
+		all global variables necessary to add a new player to the game.
+
+		Inputs:		UserName: An input user name
+					UserNode: The user's erlang node
+		Outputs:	A callback tuple to the calling erlang process of 
+					successful player addition
+	"""	
 
 	global board
 	global players
@@ -111,9 +138,19 @@ def add_player(UserName, UserNode):
 	return (Atom('added'), (Atom(UserName),Atom(UserNode)))
 
 
-# remove_player(UserName): Basic Bookkeeping deletion from players list
-#	Callable on player quit or death. 
 def remove_player(UserName, UserNode):
+	"""
+	remove_player( UserName, UserNode ): 
+
+		Internally and externally accessed functionn which handles 
+		bookkeeping deletion from players list. Callable on player 
+		quit or death. 
+
+		Inputs:		UserName: An input user name
+					UserNode: The user's erlang node
+		Outputs:	A callback tuple to the calling erlang process 
+					of successful player removal
+	"""
 
 	global board
 	global players
@@ -142,21 +179,50 @@ def remove_player(UserName, UserNode):
 
 
 def get_players():
+	"""
+	get_players():
+
+		Debugging function to check proper gamestate maintenance
+		of player table
+
+		Outputs: 	The full player information list
+	"""
+
 	global players
-	x = []
-	for i in players:
-		x.append(i)
 	return players
 
 
 def get_snakes():
+	"""
+	get_snakes():
+
+		Debugging function to check proper gamestate maintenance on 
+		snake data
+
+		Outputs:	A list of snake data
+	"""
+
 	global snakes
 	return snakes
 
-# _move_check(UserName, newP, oldP): internal function that takes the
-# UserName, new location and old location to check if the move is valid
+
 def _move_check(UserName, UserNode, newP, oldP):
-		
+	"""
+	_move_check( UserName, UserNode, newP, oldP ):
+
+		An internal function to check whether a move from input oldP
+		location to input newP location is valid for the given player.
+
+		Inputs:		UserName:	The name of the moving user
+					UserNode:	The node of the moving user
+					newP: 		The calculated move destination
+					oldP:		The calculated previous move location
+		Outputs:	On success, an erlang callback indicating that the 
+					player moved. On failure, an internal call to the 
+					remove_player function, which then handles 
+					bookkeeping cleanup.
+	"""
+
 	global board
 	global players
 	global snakes
@@ -225,9 +291,23 @@ def _move_check(UserName, UserNode, newP, oldP):
 		return (Atom('moved'),\
 			(Atom(UserName), Atom(UserNode)))
 
-# move(UserName, direc): A function to take in a player and a move and
-# digest it in the game of snek
+
 def move(UserName, UserNode, direc):
+	"""
+	move( UserName, UserNode, direc ):
+
+		An interface function called by an external erlang process 
+		to feed player moves to the game for digestion. Move returns
+		a call to an internal function _move_check, which handles the
+		logic and validity of the move
+
+		Inputs:		UserName: 	The name of the user, for key access 
+								to player data
+					UserNode: 	The name of the user's node, for 
+								key access to player data
+					direc:		The direction in which to move
+		Outputs: 	A function call to check the move validity
+	"""
 
 	global board
 	global players
@@ -279,6 +359,15 @@ def move(UserName, UserNode, direc):
 		return _move_check(UserName,UserNode,newP,oldP)
 
 def get_board():
+	"""
+	get_board():
+
+		An interface function called by an external erlang process
+		to feed the current board state to the erlang network, 
+		which then distributes that information to the clients.
+
+		Outputs:	A tuple of a 2d list of the board state
+	"""
 
 	global board
 	global players
