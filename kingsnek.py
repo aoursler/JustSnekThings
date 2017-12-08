@@ -213,15 +213,15 @@ def respawn_player( UserName, UserNode ):
 			# removing the head
 			board[ i[ 1 ][ 0 ] ][ i[ 1 ][ 1 ] ] = '*'
 			
-		i[ 6 ] = []
-		seed = find_empty_spot()
-		i[ 1 ] = seed
-		i[ 4 ] = seed
-		i[ 5 ] = 50
+			i[ 6 ] = []
+			seed = find_empty_spot()
+			i[ 1 ] = seed
+			i[ 4 ] = seed
+			i[ 5 ] = 50
 
-		board[ seed[ 0 ] ][ seed[ 1 ] ] = i[ 2 ]
+			board[ seed[ 0 ] ][ seed[ 1 ] ] = i[ 2 ]
 
-		return ( Atom( 'moved' ), ( Atom( UserName ), Atom( UserNode ) ) )
+			return ( Atom( 'moved' ), ( Atom( UserName ), Atom( UserNode ) ) )
 
 
 def get_players():
