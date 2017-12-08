@@ -187,7 +187,7 @@ init( [Pname] ) ->
 % 			  join, and adds the player to the server's 
 % 			  list of players.
 %
-% Input:  {subscrive, {UserName, UserNode}}
+% Input:  {subscribe, {UserName, UserNode}}
 %         UserName: Name the player.
 %         UserNode: The node the player is running on.
 % Output: {noreply, {[Pname], [{UserName, UserNode} | LoopData]}
@@ -293,7 +293,7 @@ handle_cast( { move_left, { UserName, UserNode } },
     { noreply, { [Pname], LoopData } };
 
 % handle_cast(move_right): Tells the backend that the player wants to
-% 			   movevright.
+% 			   move right.
 %
 % Input:  {move_right, {UserName, UserNode}}:
 %         UserName: Name the player.
@@ -398,7 +398,7 @@ handle_cast({ update_board }, { [Pname], LoopData } ) ->
     send_board(LoopData, Board),
     {noreply, { [Pname], LoopData}}.
 
-% handle_call: A stub to satify gen_server
+% handle_call: A stub to satisfy gen_server.
 %
 % Input:  Request: The purpose of the call.
 %         From: The sender of the call.
