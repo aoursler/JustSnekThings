@@ -149,6 +149,8 @@ unsubscribe( ServerName, ServerNode, UserName, UserNode ) ->
 % start_link: Starts a server for a new game of Snek. 
 %
 % Input:  ServerName: Name to give the server running the game.
+%         GameType:   Name of the game type to play: snek, infsnek,
+%                     kingsnek, infkingsnek, votesnek.
 % Output: {ok, ServerName, ServerNode} Where ServerNode is the node 
 %         the game is running on.
 start_link( ServerName, GameType ) ->
