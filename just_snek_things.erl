@@ -12,14 +12,14 @@
 -export([boardWidth/0, boardHeight/0]).
 
 % SERVER FUNCTION DEFINITIONS
--export([start_link/1, stop/1]).
+-export([start_link/2, stop/1]).
 -export([init/1, terminate/2, handle_call/3, handle_cast/2]).
 -export([filterOut/2, timer/1, get_board/1]).
 
 
 % CLIENT GLOBAL CONSTANTS
-boardWidth() -> 50. %160.
-boardHeight() -> 50. %40.
+boardWidth() -> 50. 
+boardHeight() -> 50. 
 
 % CLIENT FUNCTIONS
 
@@ -151,14 +151,14 @@ unsubscribe( ServerName, ServerNode, UserName, UserNode ) ->
 % Input:  ServerName: Name to give the server running the game.
 % Output: {ok, ServerName, ServerNode} Where ServerNode is the node 
 %         the game is running on.
-start_link( ServerName ) ->
+start_link( ServerName, GameType ) ->
     % Python VM started at PID Pname
     { ok, Pname } = python:start(),
     % Pname called to instantiate snek fields
-    python:call( Pname, snek, make_fields, [ServerName, node()] ),
+    python:call( Pname, GameType, make_fields, [ServerName, node()] ),
     % Game server is started with gen_server link: passed Pname
     { ok, Pid } = gen_server:start_link( { local, ServerName },
-        ?MODULE, [Pname], [] ),
+        ?MODULE, [Pname, GameType], [] ),
     spawn_link(?MODULE, timer, [{ServerName, node(Pid)}]),
     % GameName registered to gameserver PID
     { ok, ServerName, node(Pid) }.
@@ -179,9 +179,9 @@ stop( { ServerName, ServerNode } ) ->
 % Input: Pid of the python vm running the snek game in a list.
 % Output: {ok, { [Pname], [] }}, where the empty list will be used to
 %         hold usernames.
-init( [Pname] ) ->
+init( [ Pname, GameType ] ) ->
     link(Pname),
-    { ok, { [Pname], [] } }.
+    { ok, { [Pname], [GameType], [] } }.
 
 % handle_cast(subscribe): Tells the backend that the player wants to
 % 			  join, and adds the player to the server's 
@@ -196,10 +196,10 @@ init( [Pname] ) ->
 %         LoopData: The list of UserName, UserNode tuples that are 
 %                   in the game.
 handle_cast( { subscribe, {UserName, UserNode }} , 
-	{ [Pname], LoopData } ) ->
-    _Response = python:call( Pname, snek, add_player, 
+	{ [Pname], [GameType], LoopData } ) ->
+    _Response = python:call( Pname, GameType, add_player, 
         [ UserName, UserNode ] ),
-    { noreply, { [Pname], [ { UserName,UserNode } | LoopData ] } };
+    { noreply, { [Pname], [GameType], [ { UserName,UserNode } | LoopData ] } };
 
 % handle_cast(unsubscribe): Tells the backend that the player wants to
 % 			    leave, and removes the player from the
@@ -219,9 +219,9 @@ handle_cast( { subscribe, {UserName, UserNode }} ,
 %         LoopData: The list of UserName, UserNode tuples that are in
 %         	    the game without the UserName, UserNode tupple.
 handle_cast( { unsubscribe, {UserName, UserNode } }, 
-        { [Pname], LoopData } ) ->
+        { [Pname], [GameType], LoopData } ) ->
     {Reply, {_Uname, _Unode} } = 
-	python:call( Pname, snek, remove_player, 
+	python:call( Pname, GameType, remove_player, 
 		[ UserName, UserNode ] ),
     case Reply of 
         removed -> send_board( [{ UserName, UserNode }], die);
@@ -229,7 +229,7 @@ handle_cast( { unsubscribe, {UserName, UserNode } },
                         exit( self(), kill);
         _Reply -> ok
     end,
-    { noreply, { [Pname], 
+    { noreply, { [Pname], [GameType], 
 	filterOut( { UserName, UserNode }, LoopData ) } };
 
 % handle_cast(quit): Tells the backend that the player wants to leave,
@@ -250,16 +250,16 @@ handle_cast( { unsubscribe, {UserName, UserNode } },
 %         LoopData: The list of UserName, UserNode tuples that are in
 %         	    the game without the UserName, UserNode tupple.
 handle_cast( { quit, { UserName, UserNode } },
-	{ [Pname], LoopData } ) ->
-    {Reply, {_Uname, _Unode}} = python:call( Pname, snek, move,
+	{ [Pname], [GameType], LoopData } ) ->
+    {Reply, {_Uname, _Unode}} = python:call( Pname, GameType, move,
 	[UserName, UserNode, quit] ),
     case Reply of 
-        removed -> send_board( [{ UserName, UserNode }], die);
-        serverQuit -> send_board( [{ UserName, UserNode }], die),
-                        exit( self(), kill);
+        removed -> send_board( [{ UserName, UserNode }], die );
+        serverQuit -> send_board( [{ UserName, UserNode }], die ),
+                        exit( self(), kill );
         _Reply -> ok
     end,
-    { noreply, { [Pname], LoopData } };
+    { noreply, { [Pname], [GameType], LoopData } };
 
 % MOVES
 
@@ -280,17 +280,20 @@ handle_cast( { quit, { UserName, UserNode } },
 %         LoopData: The list of UserName, UserNode tuples that are in
 %         	    the game without the UserName, UserNode tupple.
 handle_cast( { move_left, { UserName, UserNode } },
-	{ [Pname], LoopData } ) ->    
-    {Reply, {_Uname, _Unode}} = python:call( Pname, snek, move,
+	{ [Pname], [GameType], LoopData } ) ->    
+    {Reply, {_Uname, _Unode} } = python:call( Pname, GameType, move,
 	[UserName, UserNode, a] ),
     % If the client is dead in the server, it shuts down the client.
     case Reply of 
-        removed -> send_board( [{ UserName, UserNode }], die);
-        serverQuit -> send_board( [{ UserName, UserNode }], die),
-                        exit( self(), kill);
+        removed -> send_board( [{ UserName, UserNode }], die );
+        serverQuit -> send_board( [{ UserName, UserNode }], die ),
+                        exit( self(), kill );
+        win -> io:fwrite( "Winner: ~w~n", [_Uname] ), 
+                        lists:map( fun( X ) -> send_board( [X], die ) end, 
+                        LoopData ), exit( self(), kill );
         _Reply -> ok
     end,
-    { noreply, { [Pname], LoopData } };
+    { noreply, { [Pname], [GameType], LoopData } };
 
 % handle_cast(move_right): Tells the backend that the player wants to
 % 			   move right.
@@ -309,17 +312,20 @@ handle_cast( { move_left, { UserName, UserNode } },
 %         LoopData: The list of UserName, UserNode tuples that are in
 %         	    the game without the UserName, UserNode tupple.
 handle_cast( { move_right, { UserName, UserNode } }, 
-	{ [Pname], LoopData } ) ->
-    {Reply, {_Uname, _Unode}} = python:call( Pname, snek, move,
+	{ [Pname], [GameType], LoopData } ) ->
+    {Reply, {_Uname, _Unode}} = python:call( Pname, GameType, move,
         [UserName, UserNode, d] ),
     % If the client is dead in the server, it shuts down the client.
     case Reply of 
         removed -> send_board( [{ UserName, UserNode }], die);
         serverQuit -> send_board( [{ UserName, UserNode }], die),
                         exit( self(), kill);
+        win -> io:fwrite( "Winner: ~w~n", [_Uname] ), 
+                        lists:map( fun( X ) -> send_board( [X], die ) end, 
+                        LoopData ), exit( self(), kill );
         _Reply -> ok
     end,
-    { noreply, { [Pname], LoopData } };
+    { noreply, { [Pname], [GameType], LoopData } };
 
 % handle_cast(move_up): Tells the backend that the player wants to
 % 			move up.
@@ -338,17 +344,20 @@ handle_cast( { move_right, { UserName, UserNode } },
 %         LoopData: The list of UserName, UserNode tuples that are in
 %         	    the game without the UserName, UserNode tupple.
 handle_cast( { move_up, { UserName, UserNode } },
-	{ [Pname], LoopData } ) ->
-    {Reply, {_Uname, _Unode}} = python:call( Pname, snek, move,
+	{ [Pname], [GameType], LoopData } ) ->
+    {Reply, {_Uname, _Unode}} = python:call( Pname, GameType, move,
 	[UserName, UserNode, w] ),
     % If the client is dead in the server, it shuts down the client.
     case Reply of 
         removed -> send_board( [{ UserName, UserNode }], die);
         serverQuit -> send_board([ { UserName, UserNode }], die),
                         exit( self(), kill);
+        win -> io:fwrite( "Winner: ~w~n", [_Uname] ), 
+                        lists:map( fun( X ) -> send_board( [X], die ) end, 
+                        LoopData ), exit( self(), kill );
         _Reply -> ok
     end,
-    { noreply, { [Pname], LoopData } };
+    { noreply, { [Pname], [GameType], LoopData } };
 
 % handle_cast(move_down): Tells the backend that the player wants to
 % 			  move down.
@@ -367,17 +376,20 @@ handle_cast( { move_up, { UserName, UserNode } },
 %         LoopData: The list of UserName, UserNode tuples that are in
 %         	    the game without the UserName, UserNode tupple.
 handle_cast( { move_down, { UserName, UserNode } },
-	{ [Pname], LoopData } ) ->
-    {Reply, {_Uname, _Unode}} = python:call( Pname, snek, move,
+	{ [Pname], [GameType], LoopData } ) ->
+    {Reply, {_Uname, _Unode}} = python:call( Pname, GameType, move,
 	[UserName, UserNode, s] ),
     % If the client is dead in the server, it shuts down the client.
     case Reply of 
         removed -> send_board( [{ UserName, UserNode }], die);
         serverQuit -> send_board( [{ UserName, UserNode }], die),
                         exit( self(), kill);
+        win -> io:fwrite( "Winner: ~w~n", [_Uname] ), 
+                        lists:map( fun( X ) -> send_board( [X], die ) end, 
+                        LoopData ), exit( self(), kill );
         _reply -> ok
     end,
-    { noreply, { [Pname], LoopData } };
+    { noreply, { [Pname], [GameType], LoopData } };
 
 % handle_cast(update_board): Asks the backend for an updated board
 % 			     and gives it to send_board.
@@ -393,10 +405,10 @@ handle_cast( { move_down, { UserName, UserNode } },
 %         	    is running.
 %         LoopData: The list of UserName, UserNode tuples that are in
 %         	    the game without the UserName, UserNode tupple.
-handle_cast({ update_board }, { [Pname], LoopData } ) ->
-    Board = python:call(Pname, snek, get_board, []),
+handle_cast({ update_board }, { [Pname], [GameType], LoopData } ) ->
+    Board = python:call(Pname, GameType, get_board, []),
     send_board(LoopData, Board),
-    {noreply, { [Pname], LoopData}}.
+    {noreply, { [Pname], [GameType], LoopData}}.
 
 % handle_call: A stub to satisfy gen_server.
 %
