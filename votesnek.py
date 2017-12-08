@@ -28,13 +28,14 @@ def make_fields( GameName, GameNode ):
 	"""
 	make_fields( GameName, GameNode ): 
 
-		Interface function which takes in a GameName associated with an erlang
-		gameserver and creates the fields necessary to play a game of snek.
+		Interface function which takes in a GameName associated
+		with an erlang gameserver and creates the fields 
+		necessary to play a game of snek.
 
 		Inputs:		GameName: An input gameserver name
-					GameNode: The gameserver's erlang node
-		Outputs:	A callback tuple to the calling erlang process of successful 
-	 				game instantiation
+				GameNode: The gameserver's erlang node
+		Outputs:	A callback tuple to the calling erlang
+				process of successful game instantiation
 	"""	
 
 	global board
@@ -71,8 +72,8 @@ def make_fields( GameName, GameNode ):
 
 	
 	# adds snake data to the global state variable
-	# Current player and locations stored in player array for fast access
-	#   player list is of the form:
+	# Current player and locations stored in player array for fast 
+	# access player list is of the form:
 	#   	[ Current_Location, Char_Head_Token, Score,
 	#			Last_Location, Power, Tail_Locations ]
 	player = [ seed, snake_head, 0, seed, 50, [] ] 
@@ -84,17 +85,20 @@ def make_fields( GameName, GameNode ):
 	# List  of currently used snake tokens
 	moves = []
 		
-	return ( Atom( 'started' ), ( Atom( GameName ), Atom( GameNode ) ) )
+	return ( Atom( 'started' ), \
+		( Atom( GameName ), Atom( GameNode ) ) )
 
 
 def find_empty_spot():
 	"""
 	find_empty_spot(): 
 
-		Internal function which finds and returns an empty spot on the global
-		board to be used for seeding of players and powerups
+		Internal function which finds and returns an empty spot 
+		on the global board to be used for seeding of players and
+		powerups
 
-		Outputs:	A tuple representing the 2d array index of the free space
+		Outputs:	A tuple representing the 2d array index 
+				of the free space
 	"""	
 
 	global board
@@ -117,13 +121,14 @@ def add_player( UserName, UserNode ):
 	"""
 	add_player( UserName, UserNode ):
 
-		Interface function which generates all bookkeeping and updates all global
-		variables necessary to add a new user to the game.
+		Interface function which generates all bookkeeping and
+		updates all global variables necessary to add a new user
+		to the game.
 
 		Inputs:		UserName: An input user name
-					UserNode: The user's erlang node
-		Outputs:	A callback tuple to the calling erlang process of successful 
-	 				user addition
+				UserNode: The user's erlang node
+		Outputs:	A callback tuple to the calling erlang
+				process of successful user addition
 	"""	
 
 	global board
@@ -136,8 +141,8 @@ def add_player( UserName, UserNode ):
 	# Check to see if player is already playing from a UserName
 	for i in users:
 		if ( UserName, UserNode ) == i[ 0 ]:
-			return ( Atom( 'duplicate' ), ( Atom( UserName ), \
-				Atom( UserNode ) ) )
+			return ( Atom( 'duplicate' ), \
+				( Atom( UserName ), Atom( UserNode ) ) )
 
 	users.append( ( UserName, UserNode ) )
 	
@@ -148,13 +153,14 @@ def remove_player( UserName, UserNode ):
 	"""
 	remove_player( UserName, UserNode ): 
 
-		Internally and externally accessed functionn which handles bookkeeping 
-		deletion from users list. Callable on player quit or death. 
+		Internally and externally accessed functionn which 
+		handles bookkeeping deletion from users list. Callable 
+		on player quit or death. 
 
 		Inputs:		UserName: An input user name
-					UserNode: The user's erlang node
-		Outputs:	A callback tuple to the calling erlang process of successful 
-	  				player removal
+				UserNode: The user's erlang node
+		Outputs:	A callback tuple to the calling erlang
+				process of successful player removal
 	"""
 
 	global board
@@ -171,17 +177,20 @@ def remove_player( UserName, UserNode ):
 
 	# no more players left: game exit
 	if len( users ) == 0:
-		return ( Atom( 'serverQuit' ), ( Atom( UserName ), Atom( UserNode ) ) )
+		return ( Atom( 'serverQuit' ), \
+			( Atom( UserName ), Atom( UserNode ) ) )
 
 	else:
-		return ( Atom( 'removed' ), ( Atom( UserName ), Atom( UserNode ) ) )
+		return ( Atom( 'removed' ), \
+			( Atom( UserName ), Atom( UserNode ) ) )
 
 
 def get_players():
 	"""
 	get_players():
 
-		Debugging function to check proper gamestate maintenance of player table
+		Debugging function to check proper gamestate maintenance 
+		of player table
 
 		Outputs: 	The full player information list
 	"""
@@ -194,7 +203,8 @@ def get_snakes():
 	"""
 	get_snakes():
 
-		Debugging function to check proper gamestate maintenance on snake data
+		Debugging function to check proper gamestate maintenance 
+		on snake data
 
 		Outputs:	A list of snake data
 	"""
@@ -207,16 +217,20 @@ def _move_check( UserName, UserNode, newP, oldP ):
 	"""
 	_move_check( UserName, UserNode, newP, oldP ):
 
-		An internal function to check whether a move from input oldP location
-		to input newP location is valid for the given player.
+		An internal function to check whether a move from input 
+		oldP location to input newP location is valid for the
+		given player.
 
-		Inputs:		UserName:	The name of the last moving user
-					UserNode:	The node of the last moving user
-					newP: 		The calculated move destination
-					oldP:		The calculated previous move location
-		Outputs:	On success, an erlang callback indicating that the player
-					moved. On failure, an internal call to the remove_player
-					function, which then handles bookkeeping cleanup.
+		Inputs:	UserName:	The name of the last moving user
+			UserNode:	The node of the last moving user
+			newP: 		The calculated move destination
+			oldP:		The calculated previous move 
+					location
+		Outputs:	On success, an erlang callback indicating
+				that the player moved. On failure, an
+				internal call to the remove_player 
+				function, which then handles bookkeeping
+				cleanup.
 	""" 
 		
 	global board
@@ -229,8 +243,10 @@ def _move_check( UserName, UserNode, newP, oldP ):
 	temparray = player
 
 	# Do nothing if trying to backtrack
-	if newP[ 0 ] == temparray[ 3 ][ 0 ] and newP[ 1 ] == temparray[ 3 ][ 1 ]:
-		return ( Atom( 'moved' ), ( Atom( UserName ), Atom( UserNode ) ) )
+	if newP[ 0 ] == temparray[ 3 ][ 0 ] and \
+		newP[ 1 ] == temparray[ 3 ][ 1 ]:
+		return ( Atom( 'moved' ), \
+			( Atom( UserName ), Atom( UserNode ) ) )
 
 	collis = board[ newP[ 0 ] ][ newP[ 1 ] ]
 	
@@ -268,8 +284,8 @@ def _move_check( UserName, UserNode, newP, oldP ):
 		# every move costs a point
 		temparray[ 4 ] -= 1
 		if temparray[ 4 ] == 0:
-			return ( Atom( 'serverQuit' ), ( Atom( UserName ), \
-				Atom( UserNode ) ) )
+			return ( Atom( 'serverQuit' ), \
+				( Atom( UserName ), Atom( UserNode ) ) )
 
 		# track the snake tail
 		temparray[ 5 ].append( oldP )
@@ -279,21 +295,24 @@ def _move_check( UserName, UserNode, newP, oldP ):
 
 		user = temparray
 
-		return ( Atom( 'moved' ), ( Atom( UserName ), Atom( UserNode ) ) )
+		return ( Atom( 'moved' ), \
+			( Atom( UserName ), Atom( UserNode ) ) )
 
 
 def move( UserName, UserNode, direc ):
 	"""
 	move( UserName, UserNode, direc ):
 
-		An interface function called by an external erlang process to feed player
-		moves to the game for digestion. Move returns a call to an internal
-		function _move_check, which handles the logic and validity of the move
+		An interface function called by an external erlang 
+		process to feed player moves to the game for digestion.
+		Move returns a call to an internal function _move_check,
+		which handles the logic and validity of the move
 
-		Inputs:		UserName: 	The name of the user, for key access to player data
-					UserNode: 	The name of the user's node, for key access to
-								player data
-					direc:		The direction in which to move
+		Inputs:	UserName: 	The name of the user, for key 
+					access to player data
+			UserNode: 	The name of the user's node, for 
+					key access to player data
+			direc:		The direction in which to move
 		Outputs: 	A function call to check the move validity
 	"""
 
@@ -314,7 +333,8 @@ def move( UserName, UserNode, direc ):
 
 	if len( moves ) < 20:
 		
-		return ( Atom( 'ok' ), ( Atom( UserName ), Atom( UserNode ) ) )
+		return ( Atom( 'ok' ), \
+			( Atom( UserName ), Atom( UserNode ) ) )
 
 	else:
 
@@ -335,7 +355,7 @@ def move( UserName, UserNode, direc ):
 	# Attempted to move left
 	elif ( direc == 'a' or direc == 'A' ):
 
-		newP = ( oldP[ 0 ], ( oldP[ 1 ] - 1 )%BOARDWIDTH )			
+		newP = ( oldP[ 0 ], ( oldP[ 1 ] - 1 )%BOARDWIDTH )	
 
 		return _move_check( UserName, UserNode,newP, oldP )
 
@@ -357,9 +377,9 @@ def get_board():
 	"""
 	get_board():
 
-		An interface function called by an external erlang process to feed
-		the current board state to the erlang network, which then distributes
-		that information to the clients.
+		An interface function called by an external erlang process
+		to feed the current board state to the erlang network, 
+		which then distributes that information to the clients.
 
 		Outputs:	A tuple of a 2d list of the board state
 	"""
