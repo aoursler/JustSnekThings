@@ -1,8 +1,8 @@
 import random
 from erlport.erlterms import Atom
 
-BOARDWIDTH = 50 #160
-BOARDHEIGHT = 50 #40
+BOARDWIDTH = 50
+BOARDHEIGHT = 50
 
 # instantiate a game of Snek and provide a series of function calls
 #	to interact with it 
@@ -40,8 +40,8 @@ def make_fields(GameName, GameNode) :
 		board[seed[0]][seed[1]] = '@'
 
 
-	# Current players and locations stored in players array for fast access
-	#   stores list:
+	# Current players and locations stored in players array for fast
+	# access stores list:
 	#   	[UserName, current_location, Char_Head_Token, Score, 
 	#			last_locations, Power, Tail Locations]
 	players = []
@@ -52,8 +52,8 @@ def make_fields(GameName, GameNode) :
 	return (Atom('started'), (Atom(GameName), Atom(GameNode)))
 
 
-# find_empty_spot(): Internal function to find empty spot on board for seeding powerups and 
-#   new players
+# find_empty_spot(): Internal function to find empty spot on board for
+# seeding powerups and new players
 def find_empty_spot():
 	
 	global board
@@ -71,8 +71,8 @@ def find_empty_spot():
 	return seed
 
 
-# add_player(UserName): Function to add player to game. Takes in UserName and 
-#   generates a random starting location
+# add_player(UserName): Function to add player to game. Takes in UserName
+# and generates a random starting location
 def add_player(UserName, UserNode):
 
 	global board
@@ -83,9 +83,9 @@ def add_player(UserName, UserNode):
 	# Check to see if player is already playing from a UserName
 	for i in players:
 		if (UserName,UserNode) == i[0]:
-			return (Atom('duplicate'), (Atom(UserName),Atom(UserNode)))
+			return (Atom('duplicate'),\
+				(Atom(UserName),Atom(UserNode)))
 	
-
 	# player seed location
 	seed = find_empty_spot()
 
@@ -133,10 +133,12 @@ def remove_player(UserName, UserNode):
 			snakes.remove(head)
 
 	if len(players) == 0:
-		return (Atom('serverQuit'), (Atom(UserName),Atom(UserNode)))
+		return (Atom('serverQuit'),\
+			(Atom(UserName),Atom(UserNode)))
 
 	else:
-		return (Atom('removed'), (Atom(UserName),Atom(UserNode)))
+		return (Atom('removed'),\
+			(Atom(UserName),Atom(UserNode)))
 
 
 def get_players():
@@ -151,8 +153,8 @@ def get_snakes():
 	global snakes
 	return snakes
 
-# _move_check(UserName, newP, oldP): internal function that takes the UserName, 
-#   new location and old location to check if the move is valid
+# _move_check(UserName, newP, oldP): internal function that takes the
+# UserName, new location and old location to check if the move is valid
 def _move_check(UserName, UserNode, newP, oldP):
 		
 	global board
@@ -220,10 +222,11 @@ def _move_check(UserName, UserNode, newP, oldP):
 				x = players.index(i)
 				players[x] = temparray
 
-		return (Atom('moved'), (Atom(UserName), Atom(UserNode)))
+		return (Atom('moved'),\
+			(Atom(UserName), Atom(UserNode)))
 
-# move(UserName, direc): A function to take in a player and a move and digest it in
-#   the game of snek
+# move(UserName, direc): A function to take in a player and a move and
+# digest it in the game of snek
 def move(UserName, UserNode, direc):
 
 	global board
@@ -257,7 +260,7 @@ def move(UserName, UserNode, direc):
 	# Attempted to move left
 	elif (direc == 'a' or direc == 'A'):
 
-		newP = (oldP[0],(oldP[1]-1)%BOARDWIDTH)			
+		newP = (oldP[0],(oldP[1]-1)%BOARDWIDTH)	
 
 		return _move_check(UserName,UserNode,newP,oldP)
 
@@ -283,6 +286,3 @@ def get_board():
 	global server
 
 	return tuple(board)
-		# TODO: Add powerup logic
-		#  might include adding tail field to player data for death
-		#def add_power_up(self):
