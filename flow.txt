@@ -1,0 +1,31 @@
+Just Snek Things
+
+-----------------------
+
+For setting up a server:
+
+erl -sname somename -setcookie monster
+
+c(just_snek_things).
+
+just_snek_things:start_link(gamename, gamemode).
+
+### for example: just_snek_things:start_link(mygame, infsnek). ###
+
+-----------------------
+
+For joining a server:
+
+erl -sname othername -setcookie monster
+
+c(just_snek_things).
+
+just_snek_things:join_game(gamename,gamenode,username,node()).
+
+### supported game modes:
+###   snek - vanilla snek
+###   votesnek - let's play snek!
+###   infsnek - snek with infinite tails
+###   kingsnek - snek to a certain score; respawn on death until score reached
+###   infkingsnek - snek with infinite tails to score with respawn
+
