@@ -1,11 +1,14 @@
-# 
-# frontend.py
-#
-# Tufts Comp 50CP - Group Project
-#
-# Team: JustSnekThings
-# Members: Anne Oursler, Lexi Galantino, Matt Turner
-#
+"""
+
+frontend.py
+
+Tufts Comp 50CP - Group Project
+
+Team: JustSnekThings
+Members: Anne Oursler, Lexi Galantino, Matt Turner
+
+"""
+
 
 from Tkinter import *
 from erlport.erlterms import Atom
@@ -28,9 +31,32 @@ boardHeight = 50
 
 # GUI class which instantiates a tkinter instance and loops it
 class snekGUI:
+    """
+    snekGUI
+
+        A python class to act as the functions and state for a frontent
+        GUI client for the snek system. Implementation done with erlport
+        and Tkinter
+    """
+
     def __init__(self, width, height, server):
+        """
+        __init__(self, width, height, server):
+            
+            The instatiation protocol for the snekGUI class. Does all
+            necessary bookkeeping for initial GUI state, and enters a 
+            loop to receive and stream data across the system, connecting
+            client and server.
+
+            Inputs:     width:  A server passed paramater of board width
+                        height: A server passed paramter of board height 
+                        server: The calling erlang server information
+            Outputs:    Upon completion, opens GUI annd enters a receive loop
+        """
+
         global boardWidth
         global boardHeight
+        
         self.server = server
         self.root = Tk()
         self.root.geometry('751x751')
@@ -48,30 +74,90 @@ class snekGUI:
         cast(self.server, Atom("link"))
         self.root.mainloop()
 
-    # Internal key mapping to left arrow key
+
+
     def left(self, _):
+        """
+        def left(self, _):
+            
+            Tkinter keymapped function to digest left input
+
+            Inputs:     keypress
+            Outputs:    erlang message of keypress
+        """
+
         cast(self.server, Atom("left"))
-    # Internal key mapping to right arrow key
+
+
     def right(self, _):
+        """
+        def right(self, _):
+            
+            Tkinter keymapped function to digest right input
+
+            Inputs:     keypress
+            Outputs:    erlang message of keypress
+        """
+
         cast(self.server, Atom("right"))
-    # Internal key mapping to up arrow key
+
+
     def up(self, _):
+        """
+        def up(self, _):
+            
+            Tkinter keymapped function to digest up input
+
+            Inputs:     keypress
+            Outputs:    erlang message of keypress
+        """
+
         cast(self.server, Atom("up"))
-    # Internal key mapping to down arrow key
+    
+
     def down(self, _):
+        """
+        def down(self, _):
+            
+            Tkinter keymapped function to digest down input
+
+            Inputs:     keypress
+            Outputs:    erlang message of keypress
+        """
+
         cast(self.server, Atom("down"))
-    # Internal key mapping for GUI exit
+
+
+
     def quit(self, _):
+        """
+        def quit(self, _):
+            
+            Tkinter keymapped function to digest q input as quit
+
+            Inputs:     keypress
+            Outputs:    erlang message of keypress, then GUI exit
+        """
+
         cast(self.server, Atom("quit"))
         time.sleep(1)
         self.root.destroy()
         sys.exit(0)
 
-    # Board update function to call client erlang process
+    
     def get_board(self):
+        """
+        get_board(self)::
+
+            Internal function to request board from erlang client
+
+            Outputs:    An internal call to print the received board.
+                        Also method of passing death request from erlang
+                        server
+        """
+
         board = call(Atom("just_snek_things"), Atom("get_board"), \
             [self.server])
-        #print board
         if board == Atom("die"):
             time.sleep(1)
             self.root.destroy()
@@ -80,8 +166,17 @@ class snekGUI:
         self.print_board(board)
         self.root.after(200, self.get_board)
 
-    # Internal function to print latest board
+    
     def print_board(self, board):
+        """
+        print_board(self, board):
+
+            Internal function to print the input board to the GUI canvas
+
+            Inputs:     A tuple passed via erlang of the most current board
+            Outputs:    An updated GUI state representing curret board state
+        """
+
         global tokenlist
         global colors
 
