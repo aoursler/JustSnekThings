@@ -91,7 +91,7 @@ class snekGUI:
         self.root.bind('<Down>', self.down)
         self.root.bind('q', self.quit)
         self.canvas.pack()
-	
+    
         self.root.after(100, self.get_board)
         cast(self.server, Atom("link"))
         self.root.mainloop()
