@@ -8,7 +8,7 @@
 
 % CLIENT FUNCTION DEFINITIONS
 -export([subscribe/4, unsubscribe/4]).
--export([join_game/4, move/6 ]). %
+-export([join_game/4, move/6 ]).
 -export([boardWidth/0, boardHeight/0]).
 
 % SERVER FUNCTION DEFINITIONS
