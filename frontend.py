@@ -19,7 +19,9 @@ import time
 
 # Declared global variables for GUI
 global tokenlist 
+
 global colors 
+
 global boardWidth 
 global boardHeight
 
