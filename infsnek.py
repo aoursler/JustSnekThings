@@ -1,6 +1,6 @@
 """
 
-kingsnek.py
+infsnek.py
 
 Tufts Comp 50CP - Group Project
 
@@ -27,14 +27,14 @@ def make_fields( GameName, GameNode ):
     """
     make_fields( GameName, GameNode ): 
 
-        Interface function which takes in a GameName associated
-        with an erlang gameserver and creates the fields
-        necessary to play a game of snek.
+        Interface function which takes in a GameName associated 
+        with an erlang gameserver and creates the fields necessary
+        to play a game of snek.
 
-        Inputs: GameName: An input gameserver name
-            GameNode: The gameserver's erlang node
-        Outputs:A callback tuple to the calling erlang process 
-            of successful game instantiation
+        Inputs:     GameName: An input gameserver name
+                GameNode: The gameserver's erlang node
+        Outputs:    A callback tuple to the calling erlang
+                process of successful game instantiation
     """
 
     global board
@@ -62,14 +62,15 @@ def make_fields( GameName, GameNode ):
 
     # Current players and locations stored in players array for fast 
     # access individual player sublists are of the form:
-    # [ ( UserName, UserNode ), current_location, Char_Head_Token, 
-    # Score, last_locations, Power, Tail Locations ]
+    #       [ ( UserName, UserNode ), current_location, 
+    #   Char_Head_Token, Score, last_locations, Power,
+    #   Tail Locations ]
     players = []
 
     # List  of currently used snake tokens
     snakes = []
         
-    return ( Atom( 'started' ), \
+    return ( Atom( 'started' ),\
         ( Atom( GameName ), Atom( GameNode ) ) )
 
 
@@ -105,7 +106,7 @@ def add_player( UserName, UserNode ):
     add_player( UserName, UserNode ):
 
         Interface function which generates all bookkeeping and
-        updates all global variables necessary to add a new
+        updates all global variables necessary to add a new 
         player to the game.
 
         Inputs:     UserName: An input user name
@@ -122,8 +123,8 @@ def add_player( UserName, UserNode ):
     # Check to see if player is already playing from a UserName
     for i in players:
         if ( UserName, UserNode ) == i[ 0 ]:
-            return ( Atom( 'duplicate' ), ( Atom( UserName ),\
-                Atom( UserNode ) ) )
+            return ( Atom( 'duplicate' ), \
+                ( Atom( UserName ), Atom( UserNode ) ) )
     
 
     # player seed location
@@ -156,9 +157,9 @@ def remove_player( UserName, UserNode ):
     """
     remove_player( UserName, UserNode ): 
 
-        Internally and externally accessed functionn which
-        handles bookkeeping deletion from players list. Callable
-        on player quit or death. 
+        Internally and externally accessed functionn which handles
+        bookkeeping deletion from players list. Callable on
+        player quit or death. 
 
         Inputs:     UserName: An input user name
                 UserNode: The user's erlang node
@@ -178,9 +179,9 @@ def remove_player( UserName, UserNode ):
 
             # removing the tail
             for j in i[ 6 ]:
-                board[ j[ 0 ] ][ j[ 1 ] ] = '*'
+                board[ j[ 0 ] ][ j[ 1 ] ] = ' '
             # removing the head
-            board[ i[ 1 ][ 0 ] ][ i[ 1 ][ 1 ] ] = '*'
+            board[ i[ 1 ][ 0 ] ][ i[ 1 ][ 1 ] ] = ' '
             
             players.remove( i )
             snakes.remove( head )
@@ -193,45 +194,6 @@ def remove_player( UserName, UserNode ):
     else:
         return ( Atom( 'removed' ), \
             ( Atom( UserName ), Atom( UserNode ) ) )
-
-def respawn_player( UserName, UserNode ):
-    """
-    respawn_player( UserName, UserNode ):
-
-        An internal function to respawn the player after
-        collision or energy death. 
-
-        Inputs:     UserName:   The name of the user
-                UserNode:   The node of the user
-        Outputs:    After seeding a new location, returns an
-                erlang callback indicating a successful
-                move.
-    """
-
-    global board
-    global players
-    global snakes
-    global server
-
-    for i in players:
-        if i[ 0 ] == ( UserName, UserNode ):
-            head = i[ 2 ]
-
-            for j in i[ 6 ]:
-                board[ j[ 0 ] ][ j[ 1 ] ] = '*'
-            # removing the head
-            board[ i[ 1 ][ 0 ] ][ i[ 1 ][ 1 ] ] = '*'
-            
-            i[ 6 ] = []
-            seed = find_empty_spot()
-            i[ 1 ] = seed
-            i[ 4 ] = seed
-            i[ 5 ] = 50
-
-            board[ seed[ 0 ] ][ seed[ 1 ] ] = i[ 2 ]
-
-            return ( Atom( 'moved' ), \
-                ( Atom( UserName ), Atom( UserNode ) ) )
 
 
 def get_players():
@@ -270,15 +232,16 @@ def _move_check( UserName, UserNode, newP, oldP ):
         oldP location to input newP location is valid for the
         given player.
 
-        Inputs: UserName:   The name of the moving user
-            UserNode:   The node of the moving user
-            newP:       The calculated move destination
-            oldP:       The calculated previous move
+        Inputs:     UserName:The name of the moving user
+                UserNode:The node of the moving user
+                newP:   The calculated move destination
+                oldP:   The calculated previous move 
                     location
-        Outputs:On success, an erlang callback indicating that 
-            the player moved. On failure, an internal call to 
-            the remove_player function, which then handles
-            bookkeeping cleanup.
+        Outputs:    On success, an erlang callback indicating 
+                that the player moved. On failure, an 
+                internal call to the remove_player 
+                function, which then handles bookkeeping
+                cleanup.
     """ 
         
     global board
@@ -303,7 +266,6 @@ def _move_check( UserName, UserNode, newP, oldP ):
     if collis == '*':
         collis = ' '
         temparray[ 5 ] += 25
-        temparray[ 3 ] += 25
         seed = find_empty_spot()
         board[ seed[ 0 ] ][ seed[ 1 ] ] = '*'
             
@@ -311,16 +273,15 @@ def _move_check( UserName, UserNode, newP, oldP ):
     elif collis == '@':
         collis = ' '        
         temparray[ 5 ] += 20
-        temparray[ 3 ] += 20
         seed = find_empty_spot()
-        board[ seed[ 0 ] ][ seed[ 1 ] ] = '@'   
+        board[ seed[ 0 ] ][ seed[ 1 ] ] = '*'   
 
     # collision with other filled space
     if collis != ' ':
         # crash - this kills the snek
-        board[ oldP[ 0 ] ][ oldP[ 1 ] ] = '@'
+        board[ oldP[ 0 ] ][ oldP[ 1 ] ] = ' '
 
-        return respawn_player( UserName, UserNode )
+        return remove_player( UserName, UserNode )
 
     else:
         # make old head space lowercase
@@ -335,27 +296,18 @@ def _move_check( UserName, UserNode, newP, oldP ):
         # every move costs a point
         temparray[ 5 ] -= 1
         if temparray[ 5 ] == 0:
-            return respawn_player( UserName, UserNode )
+            return remove_player( UserName, UserNode )
 
         # track the snake tail
         temparray[ 6 ].append( oldP )
-        if len( temparray[ 6 ] ) > 20:
-            tail_rem = temparray[ 6 ].pop( 0 )
-            board[ tail_rem[ 0 ] ][ tail_rem[ 1 ] ] = ' '
-
+        
         # replace the players element with the updated values
         for i in players:
             if i[ 0 ] == ( UserName, UserNode ):
                 x = players.index( i )
                 players[ x ] = temparray
-                # score check to see if player is above
-                # victory threshold
-                if players[ x ][3] >= 1000:
-                    return ( Atom( 'win' ), \
-                        ( Atom( UserName ), \
-                        Atom( UserNode ) ) ) 
 
-        return ( Atom( 'moved' ), \
+        return ( Atom( 'moved' ),\
             ( Atom( UserName ), Atom( UserNode ) ) )
 
 
@@ -368,9 +320,9 @@ def move( UserName, UserNode, direc ):
         Move returns a call to an internal function _move_check,
         which handles the logic and validity of the move
 
-        Inputs: UserName:   The name of the user, for key
+        Inputs: UserName:   The name of the user, for key 
                     access to player data
-            UserNode:   The name of the user's node, for
+            UserNode:   The name of the user's node, for 
                     key access to player data
             direc:      The direction in which to move
         Outputs:    A function call to check the move validity
